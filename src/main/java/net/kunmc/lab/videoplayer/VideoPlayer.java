@@ -1,8 +1,11 @@
 package net.kunmc.lab.videoplayer;
 
 import com.sun.jna.Pointer;
+import com.sun.jna.StringArray;
+import com.sun.jna.ptr.IntByReference;
 import cz.adamh.utils.NativeUtils;
 import net.kunmc.lab.videoplayer.mpv.MpvLibrary;
+import net.kunmc.lab.videoplayer.mpv.mpv_event;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraftforge.common.MinecraftForge;
@@ -49,9 +52,14 @@ public class VideoPlayer {
         LOGGER.info("DIRT BLOCK >> {}", Blocks.DIRT.getRegistryName());
     }
 
-    private void doClientStuff(final FMLClientSetupEvent event) {
+    private static void check_error(MpvLibrary mpv, int status) throws RuntimeException {
+        if (status < 0)
+            throw new RuntimeException("mpv API error: " + mpv.mpv_error_string(status));
+    }
+
+    private void doClientStuff(final FMLClientSetupEvent ev) {
         // do something that can only be done on the client
-        LOGGER.info("Got game settings {}", event.getMinecraftSupplier().get().gameSettings);
+        LOGGER.info("Got game settings {}", ev.getMinecraftSupplier().get().gameSettings);
 
         try {
             NativeUtils.loadLibraryFromJar("/natives/" + System.mapLibraryName("mpv"));
@@ -64,13 +72,25 @@ public class VideoPlayer {
         if (ctx == Pointer.NULL)
             throw new RuntimeException("failed creating context");
 
-        mpv.check_error(mpv.mpv_set_option_string(ctx, "input-default-bindings", "yes"));
+        check_error(mpv, mpv.mpv_set_option_string(ctx, "input-default-bindings", "yes"));
         mpv.mpv_set_option_string(ctx, "input-vo-keyboard", "yes");
-        int val = 1;
-        mpv.check_error(mpv.mpv_set_option(ctx, "osc", /*MPV_FORMAT_FLAG = */ 3, &val));
+        IntByReference val = new IntByReference();
+        val.setValue(1);
+        check_error(mpv, mpv.mpv_set_option(ctx, "osc", /*MPV_FORMAT_FLAG = */ 3, val.getPointer()));
 
-        mpv.check_error(mpv.mpv_initialize(ctx));
+        check_error(mpv, mpv.mpv_initialize(ctx));
 
+        StringArray cmd = new StringArray(new String[]{"loadfile", "test.mp4", null});
+        check_error(mpv, mpv.mpv_command(ctx, cmd));
+
+        while (true) {
+            mpv_event event = mpv.mpv_wait_event(ctx, 10000);
+            LOGGER.info("event: " + mpv.mpv_event_name(event.event_id));
+            if (event.event_id == /*MPV_EVENT_SHUTDOWN = */ 1)
+                break;
+       }
+
+        mpv.mpv_terminate_destroy(ctx);
 
         LOGGER.info(ctx);
     }

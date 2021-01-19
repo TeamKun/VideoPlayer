@@ -17,9 +17,11 @@ public interface MpvLibrary extends Library {
 
     int mpv_initialize(Pointer ctx);
 
-    default void check_error(int status) throws RuntimeException {
-        if (status < 0) {
-            throw new RuntimeException("mpv API error: " + mpv_error_string(status));
-        }
-    }
+    int mpv_command(Pointer ctx, Pointer args);
+
+    mpv_event mpv_wait_event(Pointer ctx, double timeout);
+
+    String mpv_event_name(int event);
+
+    void mpv_terminate_destroy(Pointer ctx);
 }
