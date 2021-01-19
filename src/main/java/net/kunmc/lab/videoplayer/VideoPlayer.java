@@ -1,6 +1,8 @@
 package net.kunmc.lab.videoplayer;
 
+import com.sun.jna.Pointer;
 import cz.adamh.utils.NativeUtils;
+import net.kunmc.lab.videoplayer.mpv.MpvLibrary;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraftforge.common.MinecraftForge;
@@ -54,8 +56,23 @@ public class VideoPlayer {
         try {
             NativeUtils.loadLibraryFromJar("/natives/" + System.mapLibraryName("mpv"));
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException("JNA Error", e);
         }
+
+        MpvLibrary mpv = MpvLibrary.INSTANCE;
+        Pointer ctx = mpv.mpv_create();
+        if (ctx == Pointer.NULL)
+            throw new RuntimeException("failed creating context");
+
+        mpv.check_error(mpv.mpv_set_option_string(ctx, "input-default-bindings", "yes"));
+        mpv.mpv_set_option_string(ctx, "input-vo-keyboard", "yes");
+        int val = 1;
+        mpv.check_error(mpv.mpv_set_option(ctx, "osc", /*MPV_FORMAT_FLAG = */ 3, &val));
+
+        mpv.check_error(mpv.mpv_initialize(ctx));
+
+
+        LOGGER.info(ctx);
     }
 
     private void enqueueIMC(final InterModEnqueueEvent event) {
