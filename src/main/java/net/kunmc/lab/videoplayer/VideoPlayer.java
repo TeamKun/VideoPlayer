@@ -1,8 +1,10 @@
 package net.kunmc.lab.videoplayer;
 
+import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.LongByReference;
+import com.sun.jna.ptr.PointerByReference;
 import cz.adamh.utils.NativeUtils;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
@@ -82,6 +84,32 @@ public class VideoPlayer {
 
         check_error(mpv, mpv.mpv_initialize(handle));
         check_error(mpv, mpv.mpv_command(handle, new String[]{"loadfile", "test.mp4"}));
+
+        MpvLibrary.get_proc_address get_proc_address = new MpvLibrary.get_proc_address() {
+            @Override
+            public void callback(long handle, String name) {
+                LOGGER.info("handle: " + handle + ", name: " + name);
+            }
+        };
+
+        MpvLibrary.mpv_opengl_init_params gl_init_params = new MpvLibrary.mpv_opengl_init_params();
+        gl_init_params.get_proc_address = get_proc_address;
+
+        String MPV_RENDER_API_TYPE_OPENGL_STR = "opengl";
+        Pointer MPV_RENDER_API_TYPE_OPENGL = new Memory(MPV_RENDER_API_TYPE_OPENGL_STR.getBytes().length + 1);
+        MPV_RENDER_API_TYPE_OPENGL.setString(0, MPV_RENDER_API_TYPE_OPENGL_STR);
+
+        MpvLibrary.mpv_render_param render_api = MpvLibrary.mpv_render_param.create(MpvLibrary.MPV_RENDER_PARAM_API_TYPE, MPV_RENDER_API_TYPE_OPENGL);
+        MpvLibrary.mpv_render_param render_param = MpvLibrary.mpv_render_param.create(MpvLibrary.MPV_RENDER_PARAM_API_TYPE, MPV_RENDER_API_TYPE_OPENGL);
+        MpvLibrary.mpv_render_param render_invalid = MpvLibrary.mpv_render_param.create(MpvLibrary.MPV_RENDER_PARAM_API_TYPE, MPV_RENDER_API_TYPE_OPENGL);
+
+        MpvLibrary.mpv_render_param[] params = (MpvLibrary.mpv_render_param[]) render_api.toArray(3);
+        params[1] = render_param;
+        params[2] = render_invalid;
+
+        PointerByReference mpv_gl = new PointerByReference();
+
+        check_error(mpv, mpv.mpv_render_context_create(mpv_gl.getPointer(), handle, params));
 
 //        while (true) {
 //            MpvLibrary.mpv_event event = mpv.mpv_wait_event(handle, 10000);
