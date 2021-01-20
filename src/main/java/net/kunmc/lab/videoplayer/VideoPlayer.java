@@ -58,7 +58,10 @@ public class VideoPlayer {
             throw new RuntimeException("mpv API error: " + mpv.mpv_error_string(status));
     }
 
-    private static final MpvLibrary.get_proc_address get_proc_address = (handle1, name) -> LOGGER.info("name: " + name.getString(0));
+    private static final MpvLibrary.get_proc_address get_proc_address = (handle1, name) -> {
+        LOGGER.info("name: " + name.getString(0));
+        return null;
+    };
 
     private void doClientStuff(final FMLClientSetupEvent ev) {
         main();
@@ -113,7 +116,7 @@ public class VideoPlayer {
         mpv_gl.setValue(null);
 
         // check_error(mpv, mpv.mpv_render_context_create(mpv_gl.getPointer(), handle, param));
-        check_error(mpv, mpv.mpv_render_context_create(mpv_gl.getPointer(), handle, headParam.getPointer()));
+        check_error(mpv, mpv.mpv_render_context_create(mpv_gl, handle, headParam.getPointer()));
 
         while (true) {
             MpvLibrary.mpv_event event = mpv.mpv_wait_event(handle, 10000);

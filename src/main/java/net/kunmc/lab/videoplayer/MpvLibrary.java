@@ -1,6 +1,7 @@
 package net.kunmc.lab.videoplayer;
 
 import com.sun.jna.*;
+import com.sun.jna.ptr.PointerByReference;
 
 import java.util.Arrays;
 import java.util.List;
@@ -53,7 +54,7 @@ public interface MpvLibrary extends Library {
 
     void mpv_terminate_destroy(long handle);
 
-    int mpv_render_context_create(Pointer res, long handle, Pointer params);
+    int mpv_render_context_create(PointerByReference res, long handle, Pointer params);
 
     class mpv_event extends Structure {
         public int event_id;
@@ -68,7 +69,7 @@ public interface MpvLibrary extends Library {
     }
 
     class mpv_opengl_init_params extends Structure {
-        public Callback get_proc_address;
+        public get_proc_address get_proc_address;
         public Pointer get_proc_address_ctx;
         public String extra_exts;
 
@@ -92,6 +93,6 @@ public interface MpvLibrary extends Library {
     }
 
     interface get_proc_address extends Callback {
-        void invoke(Pointer handle, Pointer name);
+        Pointer callback(Pointer handle, Pointer name);
     }
 }
