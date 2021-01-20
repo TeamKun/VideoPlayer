@@ -1,13 +1,12 @@
 package net.kunmc.lab.videoplayer;
 
 import com.sun.jna.Pointer;
-import com.sun.jna.StringArray;
 import com.sun.jna.ptr.IntByReference;
+import com.sun.jna.ptr.LongByReference;
 import cz.adamh.utils.NativeUtils;
-import net.kunmc.lab.videoplayer.mpv.MpvLibrary;
-import net.kunmc.lab.videoplayer.mpv.mpv_event;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
+import net.minecraft.client.Minecraft;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -68,31 +67,32 @@ public class VideoPlayer {
         }
 
         MpvLibrary mpv = MpvLibrary.INSTANCE;
-        Pointer ctx = mpv.mpv_create();
-        if (ctx == Pointer.NULL)
+        long handle = mpv.mpv_create();
+        if (handle == 0)
             throw new RuntimeException("failed creating context");
 
-        check_error(mpv, mpv.mpv_set_option_string(ctx, "input-default-bindings", "yes"));
-        mpv.mpv_set_option_string(ctx, "input-vo-keyboard", "yes");
-        IntByReference val = new IntByReference();
-        val.setValue(1);
-        check_error(mpv, mpv.mpv_set_option(ctx, "osc", /*MPV_FORMAT_FLAG = */ 3, val.getPointer()));
+        // LongByReference longByReference = new LongByReference(Minecraft.getInstance().func_228018_at_().getHeight());
+        // mpv.mpv_set_option(handle, "wid", 4, longByReference.getPointer());
 
-        check_error(mpv, mpv.mpv_initialize(ctx));
+        // check_error(mpv, mpv.mpv_set_option_string(handle, "input-default-bindings", "yes"));
+        // mpv.mpv_set_option_string(handle, "input-vo-keyboard", "yes");
+        // IntByReference val = new IntByReference();
+        // val.setValue(1);
+        // check_error(mpv, mpv.mpv_set_option(handle, "osc", /*MPV_FORMAT_FLAG = */ 3, val.getPointer()));
 
-        StringArray cmd = new StringArray(new String[]{"loadfile", "test.mp4", null});
-        check_error(mpv, mpv.mpv_command(ctx, cmd));
+        check_error(mpv, mpv.mpv_initialize(handle));
+        check_error(mpv, mpv.mpv_command(handle, new String[]{"loadfile", "test.mp4"}));
 
-        while (true) {
-            mpv_event event = mpv.mpv_wait_event(ctx, 10000);
-            LOGGER.info("event: " + mpv.mpv_event_name(event.event_id));
-            if (event.event_id == /*MPV_EVENT_SHUTDOWN = */ 1)
-                break;
-       }
+//        while (true) {
+//            MpvLibrary.mpv_event event = mpv.mpv_wait_event(handle, 10000);
+//            LOGGER.info("event: " + mpv.mpv_event_name(event.event_id));
+//            if (event.event_id == /*MPV_EVENT_SHUTDOWN = */ 1)
+//                break;
+//        }
+//
+//        mpv.mpv_terminate_destroy(handle);
 
-        mpv.mpv_terminate_destroy(ctx);
-
-        LOGGER.info(ctx);
+        LOGGER.info(handle);
     }
 
     private void enqueueIMC(final InterModEnqueueEvent event) {
