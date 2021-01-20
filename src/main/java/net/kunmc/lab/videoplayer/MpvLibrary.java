@@ -53,7 +53,7 @@ public interface MpvLibrary extends Library {
 
     void mpv_terminate_destroy(long handle);
 
-    int mpv_render_context_create(Pointer res, long handle, mpv_render_param[] params);
+    int mpv_render_context_create(Pointer res, long handle, Pointer params);
 
     class mpv_event extends Structure {
         public int event_id;
@@ -68,7 +68,7 @@ public interface MpvLibrary extends Library {
     }
 
     class mpv_opengl_init_params extends Structure {
-        public get_proc_address get_proc_address;
+        public Callback get_proc_address;
         public Pointer get_proc_address_ctx;
         public String extra_exts;
 
@@ -82,20 +82,16 @@ public interface MpvLibrary extends Library {
         public int type;
         public Pointer data;
 
-        public static mpv_render_param create(int type, Pointer data) {
-            mpv_render_param param = new mpv_render_param();
-            param.type = type;
-            param.data = data;
-            return param;
-        }
-
         @Override
         protected List<String> getFieldOrder() {
             return Arrays.asList("type", "data");
         }
+
+        public static class ByReference extends mpv_render_param implements Structure.ByReference {
+        }
     }
 
     interface get_proc_address extends Callback {
-        void callback(long handle, String name);
+        void invoke(Pointer handle, Pointer name);
     }
 }

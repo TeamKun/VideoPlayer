@@ -58,10 +58,13 @@ public class VideoPlayer {
             throw new RuntimeException("mpv API error: " + mpv.mpv_error_string(status));
     }
 
-    private void doClientStuff(final FMLClientSetupEvent ev) {
-        // do something that can only be done on the client
-        LOGGER.info("Got game settings {}", ev.getMinecraftSupplier().get().gameSettings);
+    private static final MpvLibrary.get_proc_address get_proc_address = (handle1, name) -> LOGGER.info("name: " + name.getString(0));
 
+    private void doClientStuff(final FMLClientSetupEvent ev) {
+        main();
+    }
+
+    public static void main(String... args) {
         try {
             NativeUtils.loadLibraryFromJar("/natives/" + System.mapLibraryName("mpv"));
         } catch (IOException e) {
@@ -85,40 +88,41 @@ public class VideoPlayer {
         check_error(mpv, mpv.mpv_initialize(handle));
         check_error(mpv, mpv.mpv_command(handle, new String[]{"loadfile", "test.mp4"}));
 
-        MpvLibrary.get_proc_address get_proc_address = new MpvLibrary.get_proc_address() {
-            @Override
-            public void callback(long handle, String name) {
-                LOGGER.info("handle: " + handle + ", name: " + name);
-            }
-        };
-
         MpvLibrary.mpv_opengl_init_params gl_init_params = new MpvLibrary.mpv_opengl_init_params();
         gl_init_params.get_proc_address = get_proc_address;
+        gl_init_params.get_proc_address_ctx = null;
+        gl_init_params.extra_exts = null;
 
         String MPV_RENDER_API_TYPE_OPENGL_STR = "opengl";
         Pointer MPV_RENDER_API_TYPE_OPENGL = new Memory(MPV_RENDER_API_TYPE_OPENGL_STR.getBytes().length + 1);
         MPV_RENDER_API_TYPE_OPENGL.setString(0, MPV_RENDER_API_TYPE_OPENGL_STR);
 
-        MpvLibrary.mpv_render_param render_api = MpvLibrary.mpv_render_param.create(MpvLibrary.MPV_RENDER_PARAM_API_TYPE, MPV_RENDER_API_TYPE_OPENGL);
-        MpvLibrary.mpv_render_param render_param = MpvLibrary.mpv_render_param.create(MpvLibrary.MPV_RENDER_PARAM_API_TYPE, MPV_RENDER_API_TYPE_OPENGL);
-        MpvLibrary.mpv_render_param render_invalid = MpvLibrary.mpv_render_param.create(MpvLibrary.MPV_RENDER_PARAM_API_TYPE, MPV_RENDER_API_TYPE_OPENGL);
-
-        MpvLibrary.mpv_render_param[] params = (MpvLibrary.mpv_render_param[]) render_api.toArray(3);
-        params[1] = render_param;
-        params[2] = render_invalid;
+        MpvLibrary.mpv_render_param headParam = new MpvLibrary.mpv_render_param();
+        MpvLibrary.mpv_render_param[] params = (MpvLibrary.mpv_render_param[]) headParam.toArray(3);
+        params[0].type = MpvLibrary.MPV_RENDER_PARAM_API_TYPE;
+        params[0].data = MPV_RENDER_API_TYPE_OPENGL;
+        params[0].write();
+        params[1].type = MpvLibrary.MPV_RENDER_PARAM_OPENGL_INIT_PARAMS;
+        params[1].data = gl_init_params.getPointer();
+        params[1].write();
+        params[2].type = MpvLibrary.MPV_RENDER_PARAM_INVALID;
+        params[2].data = null;
+        params[2].write();
 
         PointerByReference mpv_gl = new PointerByReference();
+        mpv_gl.setValue(null);
 
-        check_error(mpv, mpv.mpv_render_context_create(mpv_gl.getPointer(), handle, params));
+        // check_error(mpv, mpv.mpv_render_context_create(mpv_gl.getPointer(), handle, param));
+        check_error(mpv, mpv.mpv_render_context_create(mpv_gl.getPointer(), handle, headParam.getPointer()));
 
-//        while (true) {
-//            MpvLibrary.mpv_event event = mpv.mpv_wait_event(handle, 10000);
-//            LOGGER.info("event: " + mpv.mpv_event_name(event.event_id));
-//            if (event.event_id == /*MPV_EVENT_SHUTDOWN = */ 1)
-//                break;
-//        }
-//
-//        mpv.mpv_terminate_destroy(handle);
+        while (true) {
+            MpvLibrary.mpv_event event = mpv.mpv_wait_event(handle, 10000);
+            LOGGER.info("event: " + mpv.mpv_event_name(event.event_id));
+            if (event.event_id == /*MPV_EVENT_SHUTDOWN = */ 1)
+                break;
+        }
+
+        mpv.mpv_terminate_destroy(handle);
 
         LOGGER.info(handle);
     }
