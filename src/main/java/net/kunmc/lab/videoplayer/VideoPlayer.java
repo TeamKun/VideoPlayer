@@ -22,6 +22,7 @@ import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.lwjgl.glfw.GLFW;
 
 import java.io.IOException;
 import java.util.stream.Collectors;
@@ -58,9 +59,12 @@ public class VideoPlayer {
             throw new RuntimeException("mpv API error: " + mpv.mpv_error_string(status));
     }
 
-    private static final MpvLibrary.get_proc_address get_proc_address = (handle1, name) -> {
-        LOGGER.info("name: " + name.getString(0));
-        return null;
+    private static final MpvLibrary.get_proc_address get_proc_address = (ctx, name) -> {
+        return Pointer.createConstant(GLFW.glfwGetProcAddress(name));
+    };
+
+    private static final MpvLibrary.on_wakeup on_wakeup = d -> {
+        LOGGER.info("wakeup");
     };
 
     private void doClientStuff(final FMLClientSetupEvent ev) {
@@ -73,6 +77,9 @@ public class VideoPlayer {
         } catch (IOException e) {
             throw new RuntimeException("JNA Error", e);
         }
+
+        if (!GLFW.glfwInit())
+            throw new RuntimeException("glfw init");
 
         MpvLibrary mpv = MpvLibrary.INSTANCE;
         long handle = mpv.mpv_create();
@@ -95,6 +102,7 @@ public class VideoPlayer {
         gl_init_params.get_proc_address = get_proc_address;
         gl_init_params.get_proc_address_ctx = null;
         gl_init_params.extra_exts = null;
+        gl_init_params.write();
 
         String MPV_RENDER_API_TYPE_OPENGL_STR = "opengl";
         Pointer MPV_RENDER_API_TYPE_OPENGL = new Memory(MPV_RENDER_API_TYPE_OPENGL_STR.getBytes().length + 1);
@@ -116,7 +124,9 @@ public class VideoPlayer {
         mpv_gl.setValue(null);
 
         // check_error(mpv, mpv.mpv_render_context_create(mpv_gl.getPointer(), handle, param));
-        check_error(mpv, mpv.mpv_render_context_create(mpv_gl, handle, headParam.getPointer()));
+        check_error(mpv, mpv.mpv_render_context_create(mpv_gl, handle, headParam));
+
+        mpv.mpv_set_wakeup_callback(handle, on_wakeup, null);
 
         while (true) {
             MpvLibrary.mpv_event event = mpv.mpv_wait_event(handle, 10000);

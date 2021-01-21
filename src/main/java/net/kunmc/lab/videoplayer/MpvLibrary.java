@@ -2,11 +2,12 @@ package net.kunmc.lab.videoplayer;
 
 import com.sun.jna.*;
 import com.sun.jna.ptr.PointerByReference;
+import com.sun.jna.win32.StdCallLibrary;
 
 import java.util.Arrays;
 import java.util.List;
 
-public interface MpvLibrary extends Library {
+public interface MpvLibrary extends StdCallLibrary {
     MpvLibrary INSTANCE = (MpvLibrary) Native.loadLibrary("mpv", MpvLibrary.class);
 
     /*
@@ -54,7 +55,9 @@ public interface MpvLibrary extends Library {
 
     void mpv_terminate_destroy(long handle);
 
-    int mpv_render_context_create(PointerByReference res, long handle, Pointer params);
+    int mpv_render_context_create(PointerByReference res, long handle, mpv_render_param params);
+
+    void mpv_set_wakeup_callback(long handle, on_wakeup callback, Pointer d);
 
     class mpv_event extends Structure {
         public int event_id;
@@ -92,7 +95,11 @@ public interface MpvLibrary extends Library {
         }
     }
 
-    interface get_proc_address extends Callback {
-        Pointer callback(Pointer handle, Pointer name);
+    interface get_proc_address extends StdCallCallback {
+        Pointer callback(Pointer handle, String name);
+    }
+
+    interface on_wakeup extends StdCallCallback {
+        void callback(Pointer d);
     }
 }
