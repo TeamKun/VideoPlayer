@@ -55,9 +55,11 @@ public interface MpvLibrary extends StdCallLibrary {
 
     void mpv_terminate_destroy(long handle);
 
-    int mpv_render_context_create(PointerByReference res, long handle, mpv_render_param params);
+    int mpv_render_context_create(PointerByReference render_context, long handle, mpv_render_param params);
 
     void mpv_set_wakeup_callback(long handle, on_wakeup callback, Pointer d);
+
+    void mpv_render_context_set_update_callback(Pointer render_context, on_render_update callback, Pointer d);
 
     class mpv_event extends Structure {
         public int event_id;
@@ -100,6 +102,10 @@ public interface MpvLibrary extends StdCallLibrary {
     }
 
     interface on_wakeup extends StdCallCallback {
+        void callback(Pointer d);
+    }
+
+    interface on_render_update extends StdCallCallback {
         void callback(Pointer d);
     }
 }

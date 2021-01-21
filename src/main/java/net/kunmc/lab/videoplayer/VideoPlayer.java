@@ -23,9 +23,13 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.glfw.GLFW;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL30;
 
 import java.io.IOException;
 import java.util.stream.Collectors;
+
+import static org.lwjgl.opengl.GL30.GL_FRAMEBUFFER;
 
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod("videoplayer")
@@ -67,6 +71,10 @@ public class VideoPlayer {
         LOGGER.info("wakeup");
     };
 
+    private static final MpvLibrary.on_render_update on_mpv_redraw = d -> {
+        LOGGER.info("render update");
+    };
+
     private void doClientStuff(final FMLClientSetupEvent ev) {
         main();
     }
@@ -81,10 +89,21 @@ public class VideoPlayer {
         if (!GLFW.glfwInit())
             throw new RuntimeException("glfw init");
 
+        long window = GLFW.glfwCreateWindow(640, 480, "Hello World", 0, 0);
+        if (window == 0) {
+            GLFW.glfwTerminate();
+            throw new RuntimeException("glfw window error");
+        }
+
+        GLFW.glfwMakeContextCurrent(window);
+
         MpvLibrary mpv = MpvLibrary.INSTANCE;
         long handle = mpv.mpv_create();
         if (handle == 0)
             throw new RuntimeException("failed creating context");
+
+        mpv.mpv_set_option_string(handle, "terminal", "yes");
+        mpv.mpv_set_option_string(handle, "msg-level", "all=v");
 
         // LongByReference longByReference = new LongByReference(Minecraft.getInstance().func_228018_at_().getHeight());
         // mpv.mpv_set_option(handle, "wid", 4, longByReference.getPointer());
@@ -96,7 +115,6 @@ public class VideoPlayer {
         // check_error(mpv, mpv.mpv_set_option(handle, "osc", /*MPV_FORMAT_FLAG = */ 3, val.getPointer()));
 
         check_error(mpv, mpv.mpv_initialize(handle));
-        check_error(mpv, mpv.mpv_command(handle, new String[]{"loadfile", "test.mp4"}));
 
         MpvLibrary.mpv_opengl_init_params gl_init_params = new MpvLibrary.mpv_opengl_init_params();
         gl_init_params.get_proc_address = get_proc_address;
@@ -127,13 +145,120 @@ public class VideoPlayer {
         check_error(mpv, mpv.mpv_render_context_create(mpv_gl, handle, headParam));
 
         mpv.mpv_set_wakeup_callback(handle, on_wakeup, null);
+        mpv.mpv_render_context_set_update_callback(mpv_gl.getValue(), on_mpv_redraw, null);
 
-        while (true) {
-            MpvLibrary.mpv_event event = mpv.mpv_wait_event(handle, 10000);
-            LOGGER.info("event: " + mpv.mpv_event_name(event.event_id));
-            if (event.event_id == /*MPV_EVENT_SHUTDOWN = */ 1)
-                break;
+        // GL Start
+
+        int fbo = 1;
+        int texture;
+        int _width = 480;
+        int _height = 480;
+
+        GL30.glGenFramebuffers(1, &fbo);
+        GL30.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+
+        glGenTextures(1, &texture);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, _width, _height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
+        glDrawBuffer(GL_COLOR_ATTACHMENT0);
+
+        if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+        {
+            printf("Error creating framebuffer\n");
+            return 1;
         }
+
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        int one = 1;
+        mpv_opengl_fbo fbo_settings =
+                {
+                        static_cast<int>(fbo),
+                _width,
+                _height,
+                GL_RGB8
+			};
+        mpv_render_param render_params[]
+        {
+            {MPV_RENDER_PARAM_OPENGL_FBO, &fbo_settings},
+            {MPV_RENDER_PARAM_FLIP_Y,     &one},
+            {MPV_RENDER_PARAM_INVALID,    nullptr}
+        };
+
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        glOrtho(-1.f, 1.f, -1.f, 1.f, -1.0f, 1.0f);
+
+        // GL End
+
+        // Play this file.
+	const char* cmd[] = {"loadfile", argv[1], NULL};
+        check_error(mpv_command(ctx, cmd));
+
+        // Let it play, and wait until the user quits.
+        //	while (1)
+        //	{
+        //		mpv_event* event = mpv_wait_event(ctx, 10000);
+        //		printf("event: %s\n", mpv_event_name(event->event_id));
+        //		if (event->event_id == MPV_EVENT_SHUTDOWN)
+        //			break;
+        //	}
+
+        /* Loop until the user closes the window */
+        while (!glfwWindowShouldClose(window))
+        {
+            glViewport(0, 0, 640, 480);
+            /* Render here */
+            glClear(GL_COLOR_BUFFER_BIT);
+
+            mpv_render_context_render(mpv_gl, render_params);
+            glViewport(0, 0, 640, 480);
+
+            glDisable(GL_TEXTURE_2D);
+            glBegin(GL_QUADS);
+            glVertex2f(-.75f, -.75f);
+            glVertex2f(-.75f, .75f);
+            glVertex2f(.75f, .75f);
+            glVertex2f(.75f, -.75f);
+            glEnd();
+
+            glBindTexture(GL_TEXTURE_2D, texture);
+            glEnable(GL_TEXTURE_2D);
+            glBegin(GL_QUADS);
+            glTexCoord2i(0, 0);
+            glVertex2f(-.5f, -.5f);
+            glTexCoord2i(0, 1);
+            glVertex2f(0.f, .5f);
+            glTexCoord2i(1, 1);
+            glVertex2f(1.f, .5f);
+            glTexCoord2i(1, 0);
+            glVertex2f(.5f, -.5f);
+            glEnd();
+            glDisable(GL_TEXTURE_2D);
+            glBindTexture(GL_TEXTURE_2D, 0);
+
+            /* Swap front and back buffers */
+            glfwSwapBuffers(window);
+
+            /* Poll for and process events */
+            glfwPollEvents();
+        }
+
+        glfwTerminate();
+
+        //    while (true) {
+        //        MpvLibrary.mpv_event event = mpv.mpv_wait_event(handle, 10000);
+        //        LOGGER.info("event: " + mpv.mpv_event_name(event.event_id));
+        //        if (event.event_id == /*MPV_EVENT_SHUTDOWN = */ 1)
+        //            break;
+        //    }
 
         mpv.mpv_terminate_destroy(handle);
 
