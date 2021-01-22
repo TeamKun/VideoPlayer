@@ -24,6 +24,8 @@ public interface MpvLibrary extends StdCallLibrary {
     int MPV_RENDER_PARAM_INVALID = 0;
     int MPV_RENDER_PARAM_API_TYPE = 1;
     int MPV_RENDER_PARAM_OPENGL_INIT_PARAMS = 2;
+    int MPV_RENDER_PARAM_OPENGL_FBO = 3;
+    int MPV_RENDER_PARAM_FLIP_Y = 4;
 
     long mpv_client_api_version();
 
@@ -61,6 +63,8 @@ public interface MpvLibrary extends StdCallLibrary {
 
     void mpv_render_context_set_update_callback(Pointer render_context, on_render_update callback, Pointer d);
 
+    int mpv_render_context_render(Pointer render_context, mpv_render_param params);
+
     class mpv_event extends Structure {
         public int event_id;
         public int error;
@@ -92,8 +96,16 @@ public interface MpvLibrary extends StdCallLibrary {
         protected List<String> getFieldOrder() {
             return Arrays.asList("type", "data");
         }
+    }
 
-        public static class ByReference extends mpv_render_param implements Structure.ByReference {
+    class mpv_opengl_fbo extends Structure {
+        public int fbo;
+        public int w, h;
+        public int internal_format;
+
+        @Override
+        protected List<String> getFieldOrder() {
+            return Arrays.asList("fbo", "w", "h", "internal_format");
         }
     }
 

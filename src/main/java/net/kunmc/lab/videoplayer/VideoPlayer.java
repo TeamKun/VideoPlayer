@@ -3,12 +3,10 @@ package net.kunmc.lab.videoplayer;
 import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
-import com.sun.jna.ptr.LongByReference;
 import com.sun.jna.ptr.PointerByReference;
 import cz.adamh.utils.NativeUtils;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
-import net.minecraft.client.Minecraft;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -22,14 +20,15 @@ import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.lwjgl.glfw.GLFW;
+import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL30;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.stream.Collectors;
 
-import static org.lwjgl.opengl.GL30.GL_FRAMEBUFFER;
+import static org.lwjgl.opengl.GL30.*;
+import static org.lwjgl.glfw.GLFW.*;
 
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod("videoplayer")
@@ -64,7 +63,7 @@ public class VideoPlayer {
     }
 
     private static final MpvLibrary.get_proc_address get_proc_address = (ctx, name) -> {
-        return Pointer.createConstant(GLFW.glfwGetProcAddress(name));
+        return Pointer.createConstant(glfwGetProcAddress(name));
     };
 
     private static final MpvLibrary.on_wakeup on_wakeup = d -> {
@@ -86,16 +85,17 @@ public class VideoPlayer {
             throw new RuntimeException("JNA Error", e);
         }
 
-        if (!GLFW.glfwInit())
+        if (!glfwInit())
             throw new RuntimeException("glfw init");
 
-        long window = GLFW.glfwCreateWindow(640, 480, "Hello World", 0, 0);
+        long window = glfwCreateWindow(640, 480, "Hello World", 0, 0);
         if (window == 0) {
-            GLFW.glfwTerminate();
+            glfwTerminate();
             throw new RuntimeException("glfw window error");
         }
 
-        GLFW.glfwMakeContextCurrent(window);
+        glfwMakeContextCurrent(window);
+        GL.createCapabilities();
 
         MpvLibrary mpv = MpvLibrary.INSTANCE;
         long handle = mpv.mpv_create();
@@ -126,71 +126,72 @@ public class VideoPlayer {
         Pointer MPV_RENDER_API_TYPE_OPENGL = new Memory(MPV_RENDER_API_TYPE_OPENGL_STR.getBytes().length + 1);
         MPV_RENDER_API_TYPE_OPENGL.setString(0, MPV_RENDER_API_TYPE_OPENGL_STR);
 
-        MpvLibrary.mpv_render_param headParam = new MpvLibrary.mpv_render_param();
-        MpvLibrary.mpv_render_param[] params = (MpvLibrary.mpv_render_param[]) headParam.toArray(3);
-        params[0].type = MpvLibrary.MPV_RENDER_PARAM_API_TYPE;
-        params[0].data = MPV_RENDER_API_TYPE_OPENGL;
-        params[0].write();
-        params[1].type = MpvLibrary.MPV_RENDER_PARAM_OPENGL_INIT_PARAMS;
-        params[1].data = gl_init_params.getPointer();
-        params[1].write();
-        params[2].type = MpvLibrary.MPV_RENDER_PARAM_INVALID;
-        params[2].data = null;
-        params[2].write();
+        MpvLibrary.mpv_render_param head_init_param = new MpvLibrary.mpv_render_param();
+        MpvLibrary.mpv_render_param[] init_params = (MpvLibrary.mpv_render_param[]) head_init_param.toArray(3);
+        init_params[0].type = MpvLibrary.MPV_RENDER_PARAM_API_TYPE;
+        init_params[0].data = MPV_RENDER_API_TYPE_OPENGL;
+        init_params[0].write();
+        init_params[1].type = MpvLibrary.MPV_RENDER_PARAM_OPENGL_INIT_PARAMS;
+        init_params[1].data = gl_init_params.getPointer();
+        init_params[1].write();
+        init_params[2].type = MpvLibrary.MPV_RENDER_PARAM_INVALID;
+        init_params[2].data = null;
+        init_params[2].write();
 
         PointerByReference mpv_gl = new PointerByReference();
         mpv_gl.setValue(null);
 
         // check_error(mpv, mpv.mpv_render_context_create(mpv_gl.getPointer(), handle, param));
-        check_error(mpv, mpv.mpv_render_context_create(mpv_gl, handle, headParam));
+        check_error(mpv, mpv.mpv_render_context_create(mpv_gl, handle, head_init_param));
 
         mpv.mpv_set_wakeup_callback(handle, on_wakeup, null);
         mpv.mpv_render_context_set_update_callback(mpv_gl.getValue(), on_mpv_redraw, null);
 
         // GL Start
 
-        int fbo = 1;
-        int texture;
         int _width = 480;
         int _height = 480;
 
-        GL30.glGenFramebuffers(1, &fbo);
-        GL30.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+        int fbo = glGenFramebuffers();
+        glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 
-        glGenTextures(1, &texture);
+        int texture = GL11.glGenTextures();
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, texture);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, _width, _height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, _width, _height, 0, GL_RGB, GL_UNSIGNED_BYTE, (ByteBuffer) null);
 
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture, 0);
         glDrawBuffer(GL_COLOR_ATTACHMENT0);
 
         if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-        {
-            printf("Error creating framebuffer\n");
-            return 1;
-        }
+            throw new RuntimeException("Error creating framebuffer");
 
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-        int one = 1;
-        mpv_opengl_fbo fbo_settings =
-                {
-                        static_cast<int>(fbo),
-                _width,
-                _height,
-                GL_RGB8
-			};
-        mpv_render_param render_params[]
-        {
-            {MPV_RENDER_PARAM_OPENGL_FBO, &fbo_settings},
-            {MPV_RENDER_PARAM_FLIP_Y,     &one},
-            {MPV_RENDER_PARAM_INVALID,    nullptr}
-        };
+        MpvLibrary.mpv_opengl_fbo fbo_settings = new MpvLibrary.mpv_opengl_fbo();
+        fbo_settings.fbo = fbo;
+        fbo_settings.w = _width;
+        fbo_settings.h = _height;
+        fbo_settings.internal_format = GL_RGB8;
+        fbo_settings.write();
+
+        IntByReference one = new IntByReference(1);
+
+        MpvLibrary.mpv_render_param head_render_param = new MpvLibrary.mpv_render_param();
+        MpvLibrary.mpv_render_param[] render_params = (MpvLibrary.mpv_render_param[]) head_render_param.toArray(3);
+        render_params[0].type = MpvLibrary.MPV_RENDER_PARAM_OPENGL_FBO;
+        render_params[0].data = fbo_settings.getPointer();
+        render_params[0].write();
+        render_params[1].type = MpvLibrary.MPV_RENDER_PARAM_FLIP_Y;
+        render_params[1].data = one.getPointer();
+        render_params[1].write();
+        render_params[2].type = MpvLibrary.MPV_RENDER_PARAM_INVALID;
+        render_params[2].data = null;
+        render_params[2].write();
 
         glMatrixMode(GL_PROJECTION);
         glLoadIdentity();
@@ -199,8 +200,7 @@ public class VideoPlayer {
         // GL End
 
         // Play this file.
-	const char* cmd[] = {"loadfile", argv[1], NULL};
-        check_error(mpv_command(ctx, cmd));
+        check_error(mpv, mpv.mpv_command(handle, new String[]{"loadfile", "test.mp4", null}));
 
         // Let it play, and wait until the user quits.
         //	while (1)
@@ -212,13 +212,12 @@ public class VideoPlayer {
         //	}
 
         /* Loop until the user closes the window */
-        while (!glfwWindowShouldClose(window))
-        {
+        while (!glfwWindowShouldClose(window)) {
             glViewport(0, 0, 640, 480);
             /* Render here */
             glClear(GL_COLOR_BUFFER_BIT);
 
-            mpv_render_context_render(mpv_gl, render_params);
+            mpv.mpv_render_context_render(mpv_gl.getValue(), head_render_param);
             glViewport(0, 0, 640, 480);
 
             glDisable(GL_TEXTURE_2D);
