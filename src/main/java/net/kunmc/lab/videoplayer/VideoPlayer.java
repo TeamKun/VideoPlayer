@@ -1,6 +1,5 @@
 package net.kunmc.lab.videoplayer;
 
-import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
@@ -9,12 +8,14 @@ import com.sun.jna.ptr.PointerByReference;
 import cz.adamh.utils.NativeUtils;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
-import net.minecraft.client.MainWindow;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.AbstractGui;
+import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.WorldVertexBufferUploader;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.shader.Framebuffer;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
-import net.minecraftforge.client.event.TextureStitchEvent;
+import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -51,6 +52,8 @@ public class VideoPlayer {
     private long handle;
     private Framebuffer framebuffer;
     private int fbo;
+    private IntByReference zero = new IntByReference(0);
+    private IntByReference one = new IntByReference(1);
 
     public VideoPlayer() {
         // Register the setup method for modloading
@@ -85,7 +88,10 @@ public class VideoPlayer {
     private static final MpvLibrary.on_wakeup on_wakeup = d -> {
     };
 
+    private static boolean redraw = false;
+
     private static final MpvLibrary.on_render_update on_mpv_redraw = d -> {
+        redraw = true;
     };
 
     private void doClientStuff(final FMLClientSetupEvent ev) {
@@ -127,18 +133,36 @@ public class VideoPlayer {
             check_error(mpv, mpv.mpv_command(handle, new String[]{"loadfile", "test.mp4", null}));
         }
 
+        RenderSystem.pushLightingAttributes();
         RenderSystem.pushTextureAttributes();
+        RenderSystem.pushMatrix();
 
-        framebuffer.bindFramebuffer(true);
-        mpv.mpv_render_context_render(mpv_gl.getValue(), head_render_param);
-        Minecraft.getInstance().getFramebuffer().bindFramebuffer(true);
+        if (redraw) {
+            redraw = false;
+
+            int flags = mpv.mpv_render_context_update(mpv_gl.getValue());
+            if ((flags & MpvLibrary.MPV_RENDER_UPDATE_FRAME) != 0) {
+                framebuffer.bindFramebuffer(true);
+                mpv.mpv_render_context_render(mpv_gl.getValue(), head_render_param);
+                Minecraft.getInstance().getFramebuffer().bindFramebuffer(true);
+            }
+        }
 
         glBindTexture(GL_TEXTURE_2D, framebuffer.framebufferTexture);
         glEnable(GL_TEXTURE_2D);
-        //Minecraft.getInstance().getMainWindow().
-        AbstractGui.blit(32, 32, 0, 0, 0, 64, 64, 64, 64);
-        glDisable(GL_TEXTURE_2D);
 
+        BufferBuilder bufferbuilder = Tessellator.getInstance().getBuffer();
+        bufferbuilder.begin(GL_QUADS, DefaultVertexFormats.POSITION_TEX);
+        bufferbuilder.pos(0, 100, 0).tex(0, 1).endVertex();
+        bufferbuilder.pos(100, 100, 0).tex(1, 1).endVertex();
+        bufferbuilder.pos(100, 0, 0).tex(1, 0).endVertex();
+        bufferbuilder.pos(0, 0, 0).tex(0, 0).endVertex();
+        bufferbuilder.finishDrawing();
+        RenderSystem.enableAlphaTest();
+        WorldVertexBufferUploader.draw(bufferbuilder);
+
+        RenderSystem.popMatrix();
+        RenderSystem.popAttributes();
         RenderSystem.popAttributes();
     }
 
@@ -155,9 +179,6 @@ public class VideoPlayer {
         fbo_settings.h = _height;
         fbo_settings.internal_format = GL_RGB8;
         fbo_settings.write();
-
-        IntByReference zero = new IntByReference(0);
-        IntByReference one = new IntByReference(1);
 
         head_render_param = new MpvLibrary.mpv_render_param();
         MpvLibrary.mpv_render_param[] render_params = (MpvLibrary.mpv_render_param[]) head_render_param.toArray(4);
@@ -187,16 +208,19 @@ public class VideoPlayer {
         MPV_RENDER_API_TYPE_OPENGL.setString(0, MPV_RENDER_API_TYPE_OPENGL_STR);
 
         MpvLibrary.mpv_render_param head_init_param = new MpvLibrary.mpv_render_param();
-        MpvLibrary.mpv_render_param[] init_params = (MpvLibrary.mpv_render_param[]) head_init_param.toArray(3);
+        MpvLibrary.mpv_render_param[] init_params = (MpvLibrary.mpv_render_param[]) head_init_param.toArray(4);
         init_params[0].type = MpvLibrary.MPV_RENDER_PARAM_API_TYPE;
         init_params[0].data = MPV_RENDER_API_TYPE_OPENGL;
         init_params[0].write();
         init_params[1].type = MpvLibrary.MPV_RENDER_PARAM_OPENGL_INIT_PARAMS;
         init_params[1].data = gl_init_params.getPointer();
         init_params[1].write();
-        init_params[2].type = MpvLibrary.MPV_RENDER_PARAM_INVALID;
-        init_params[2].data = null;
+        init_params[2].type = MpvLibrary.MPV_RENDER_PARAM_ADVANCED_CONTROL;
+        init_params[2].data = one.getPointer();
         init_params[2].write();
+        init_params[3].type = MpvLibrary.MPV_RENDER_PARAM_INVALID;
+        init_params[3].data = null;
+        init_params[3].write();
 
         mpv_gl = new PointerByReference();
         mpv_gl.setValue(null);

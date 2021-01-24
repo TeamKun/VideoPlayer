@@ -1,6 +1,8 @@
 package net.kunmc.lab.videoplayer;
 
-import com.sun.jna.*;
+import com.sun.jna.Native;
+import com.sun.jna.Pointer;
+import com.sun.jna.Structure;
 import com.sun.jna.ptr.PointerByReference;
 import com.sun.jna.win32.StdCallLibrary;
 
@@ -28,6 +30,8 @@ public interface MpvLibrary extends StdCallLibrary {
     int MPV_RENDER_PARAM_FLIP_Y = 4;
     int MPV_RENDER_PARAM_ADVANCED_CONTROL = 10;
     int MPV_RENDER_PARAM_BLOCK_FOR_TARGET_TIME = 12;
+
+    int MPV_RENDER_UPDATE_FRAME = 1;
 
     long mpv_client_api_version();
 
@@ -64,6 +68,8 @@ public interface MpvLibrary extends StdCallLibrary {
     void mpv_set_wakeup_callback(long handle, on_wakeup callback, Pointer d);
 
     void mpv_render_context_set_update_callback(Pointer render_context, on_render_update callback, Pointer d);
+
+    int mpv_render_context_update(Pointer render_context);
 
     int mpv_render_context_render(Pointer render_context, mpv_render_param params);
 
