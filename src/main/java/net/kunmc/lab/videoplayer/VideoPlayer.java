@@ -1,5 +1,6 @@
 package net.kunmc.lab.videoplayer;
 
+import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
@@ -11,9 +12,11 @@ import net.minecraft.block.Blocks;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.Tessellator;
+import net.minecraft.client.renderer.Vector3d;
 import net.minecraft.client.renderer.WorldVertexBufferUploader;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.shader.Framebuffer;
+import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.common.MinecraftForge;
@@ -116,7 +119,7 @@ public class VideoPlayer {
     private boolean initialized = false;
 
     @SubscribeEvent
-    public void onRender(RenderGameOverlayEvent.Post event) {
+    public void onRender(RenderWorldLastEvent event) {
         if (!initialized) {
             initialized = true;
 
@@ -137,6 +140,11 @@ public class VideoPlayer {
         RenderSystem.pushTextureAttributes();
         RenderSystem.pushMatrix();
 
+        Vec3d view = Minecraft.getInstance().gameRenderer.getActiveRenderInfo().getProjectedView();
+        MatrixStack stack = event.getMatrixStack();
+        stack.translate(-view.x, -view.y, -view.z); // translate
+        RenderSystem.multMatrix(stack.getLast().getMatrix());
+
         if (redraw) {
             redraw = false;
 
@@ -151,11 +159,12 @@ public class VideoPlayer {
         glBindTexture(GL_TEXTURE_2D, framebuffer.framebufferTexture);
         glEnable(GL_TEXTURE_2D);
 
-        BufferBuilder bufferbuilder = Tessellator.getInstance().getBuffer();
+        Tessellator tessellator = Tessellator.getInstance();
+        BufferBuilder bufferbuilder = tessellator.getBuffer();
         bufferbuilder.begin(GL_QUADS, DefaultVertexFormats.POSITION_TEX);
-        bufferbuilder.pos(0, 100, 0).tex(0, 1).endVertex();
-        bufferbuilder.pos(100, 100, 0).tex(1, 1).endVertex();
-        bufferbuilder.pos(100, 0, 0).tex(1, 0).endVertex();
+        bufferbuilder.pos(0, 1, 0).tex(0, 1).endVertex();
+        bufferbuilder.pos(1, 1, 0).tex(1, 1).endVertex();
+        bufferbuilder.pos(1, 0, 0).tex(1, 0).endVertex();
         bufferbuilder.pos(0, 0, 0).tex(0, 0).endVertex();
         bufferbuilder.finishDrawing();
         RenderSystem.enableAlphaTest();
