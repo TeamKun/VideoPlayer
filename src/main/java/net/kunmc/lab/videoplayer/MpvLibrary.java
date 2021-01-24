@@ -41,6 +41,8 @@ public interface MpvLibrary extends StdCallLibrary {
 
     int mpv_command(long handle, String[] args);
 
+    int mpv_command_async(long handle, int reply_userdata, String[] args);
+
     int mpv_command_string(long handle, String args);
 
     Pointer mpv_get_property_string(long handle, String name);

@@ -133,7 +133,7 @@ public class VideoPlayer {
             initMpvFbo(_width, _height, fbo);
 
             // Play this file.
-            check_error(mpv, mpv.mpv_command(handle, new String[]{"loadfile", "test.mp4", null}));
+            check_error(mpv, mpv.mpv_command_async(handle, 0, new String[]{"loadfile", "test.mp4", null}));
         }
 
         RenderSystem.pushLightingAttributes();
@@ -150,14 +150,14 @@ public class VideoPlayer {
 
             int flags = mpv.mpv_render_context_update(mpv_gl.getValue());
             if ((flags & MpvLibrary.MPV_RENDER_UPDATE_FRAME) != 0) {
-                framebuffer.bindFramebuffer(true);
                 mpv.mpv_render_context_render(mpv_gl.getValue(), head_render_param);
                 Minecraft.getInstance().getFramebuffer().bindFramebuffer(true);
             }
         }
 
-        glBindTexture(GL_TEXTURE_2D, framebuffer.framebufferTexture);
-        glEnable(GL_TEXTURE_2D);
+        framebuffer.bindFramebufferTexture();
+        RenderSystem.enableTexture();
+        RenderSystem.disableCull();
 
         Tessellator tessellator = Tessellator.getInstance();
         BufferBuilder bufferbuilder = tessellator.getBuffer();
