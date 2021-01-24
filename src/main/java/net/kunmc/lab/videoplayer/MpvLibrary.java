@@ -33,6 +33,8 @@ public interface MpvLibrary extends StdCallLibrary {
 
     int MPV_RENDER_UPDATE_FRAME = 1;
 
+    int MPV_FORMAT_DOUBLE = 5;
+
     long mpv_client_api_version();
 
     long mpv_create();
@@ -74,6 +76,8 @@ public interface MpvLibrary extends StdCallLibrary {
     int mpv_render_context_update(Pointer render_context);
 
     int mpv_render_context_render(Pointer render_context, mpv_render_param params);
+
+    int mpv_set_property_async(long handle, int reply_userdata, String name, int format, Pointer data);
 
     class mpv_event extends Structure {
         public int event_id;

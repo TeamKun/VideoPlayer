@@ -4,20 +4,21 @@ import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
+import com.sun.jna.ptr.DoubleByReference;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
 import cz.adamh.utils.NativeUtils;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
+import net.minecraft.client.GameSettings;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.Vector3d;
 import net.minecraft.client.renderer.WorldVertexBufferUploader;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.shader.Framebuffer;
+import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.Vec3d;
-import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegistryEvent;
@@ -57,6 +58,7 @@ public class VideoPlayer {
     private int fbo;
     private IntByReference zero = new IntByReference(0);
     private IntByReference one = new IntByReference(1);
+    private final DoubleByReference volumeRef = new DoubleByReference();
 
     public VideoPlayer() {
         // Register the setup method for modloading
@@ -133,7 +135,7 @@ public class VideoPlayer {
             initMpvFbo(_width, _height, fbo);
 
             // Play this file.
-            check_error(mpv, mpv.mpv_command_async(handle, 0, new String[]{"loadfile", "test.mp4", null}));
+            check_error(mpv, mpv.mpv_command_async(handle, 0, new String[]{"loadfile", "https://cdn.discordapp.com/attachments/797220314983301150/802874938746208276/Dame_Da_Ne_KUN.mp4", null}));
         }
 
         RenderSystem.pushLightingAttributes();
@@ -141,6 +143,13 @@ public class VideoPlayer {
         RenderSystem.pushMatrix();
 
         Vec3d view = Minecraft.getInstance().gameRenderer.getActiveRenderInfo().getProjectedView();
+
+        GameSettings gameSettings = Minecraft.getInstance().gameSettings;
+        float distance = Math.min(1, Math.max(0, (float) view.distanceTo(Vec3d.ZERO) / 24f));
+        float volume = Math.max(0.1f, gameSettings.getSoundLevel(SoundCategory.MASTER) * gameSettings.getSoundLevel(SoundCategory.VOICE) - distance);
+        volumeRef.setValue(volume * 100);
+        mpv.mpv_set_property_async(handle, 0, "volume", MpvLibrary.MPV_FORMAT_DOUBLE, volumeRef.getPointer());
+
         MatrixStack stack = event.getMatrixStack();
         stack.translate(-view.x, -view.y, -view.z); // translate
         RenderSystem.multMatrix(stack.getLast().getMatrix());
