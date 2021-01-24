@@ -1,5 +1,7 @@
 package net.kunmc.lab.videoplayer;
 
+import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
@@ -7,6 +9,12 @@ import com.sun.jna.ptr.PointerByReference;
 import cz.adamh.utils.NativeUtils;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
+import net.minecraft.client.MainWindow;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.AbstractGui;
+import net.minecraft.client.shader.Framebuffer;
+import net.minecraftforge.client.event.RenderGameOverlayEvent;
+import net.minecraftforge.client.event.TextureStitchEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegistryEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -27,8 +35,9 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.stream.Collectors;
 
-import static org.lwjgl.opengl.GL30.*;
+import static net.minecraft.client.Minecraft.IS_RUNNING_ON_MAC;
 import static org.lwjgl.glfw.GLFW.*;
+import static org.lwjgl.opengl.GL30.*;
 
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod("videoplayer")
@@ -36,6 +45,12 @@ public class VideoPlayer {
 
     // Directly reference a log4j logger.
     private static final Logger LOGGER = LogManager.getLogger();
+    private MpvLibrary.mpv_render_param head_render_param;
+    private PointerByReference mpv_gl;
+    private MpvLibrary mpv;
+    private long handle;
+    private Framebuffer framebuffer;
+    private int fbo;
 
     public VideoPlayer() {
         // Register the setup method for modloading
@@ -63,19 +78,133 @@ public class VideoPlayer {
     }
 
     private static final MpvLibrary.get_proc_address get_proc_address = (ctx, name) -> {
-        return Pointer.createConstant(glfwGetProcAddress(name));
+        long addr = glfwGetProcAddress(name);
+        return Pointer.createConstant(addr);
     };
 
     private static final MpvLibrary.on_wakeup on_wakeup = d -> {
-        LOGGER.info("wakeup");
     };
 
     private static final MpvLibrary.on_render_update on_mpv_redraw = d -> {
-        LOGGER.info("render update");
     };
 
     private void doClientStuff(final FMLClientSetupEvent ev) {
-        main();
+        try {
+            NativeUtils.loadLibraryFromJar("/natives/" + System.mapLibraryName("mpv"));
+        } catch (IOException e) {
+            throw new RuntimeException("JNA Error", e);
+        }
+
+        mpv = MpvLibrary.INSTANCE;
+        handle = mpv.mpv_create();
+        if (handle == 0)
+            throw new RuntimeException("failed creating context");
+
+        mpv.mpv_set_option_string(handle, "terminal", "yes");
+        mpv.mpv_set_option_string(handle, "msg-level", "all=v");
+
+        check_error(mpv, mpv.mpv_initialize(handle));
+        mpv.mpv_set_wakeup_callback(handle, on_wakeup, null);
+    }
+
+    private boolean initialized = false;
+
+    @SubscribeEvent
+    public void onRender(RenderGameOverlayEvent.Post event) {
+        if (!initialized) {
+            initialized = true;
+
+            initMpvRenderer(mpv, handle);
+
+            int _width = 480;
+            int _height = 480;
+
+            fbo = initFbo(_width, _height);
+
+            initMpvFbo(_width, _height, fbo);
+
+            // Play this file.
+            check_error(mpv, mpv.mpv_command(handle, new String[]{"loadfile", "test.mp4", null}));
+        }
+
+        RenderSystem.pushTextureAttributes();
+
+        framebuffer.bindFramebuffer(true);
+        mpv.mpv_render_context_render(mpv_gl.getValue(), head_render_param);
+        Minecraft.getInstance().getFramebuffer().bindFramebuffer(true);
+
+        glBindTexture(GL_TEXTURE_2D, framebuffer.framebufferTexture);
+        glEnable(GL_TEXTURE_2D);
+        //Minecraft.getInstance().getMainWindow().
+        AbstractGui.blit(32, 32, 0, 0, 0, 64, 64, 64, 64);
+        glDisable(GL_TEXTURE_2D);
+
+        RenderSystem.popAttributes();
+    }
+
+    private int initFbo(int _width, int _height) {
+        framebuffer = new Framebuffer(_width, _height, true, IS_RUNNING_ON_MAC);
+        framebuffer.setFramebufferColor(0.0F, 0.0F, 0.0F, 0.0F);
+        return framebuffer.framebufferObject;
+    }
+
+    private void initMpvFbo(int _width, int _height, int fbo) {
+        MpvLibrary.mpv_opengl_fbo fbo_settings = new MpvLibrary.mpv_opengl_fbo();
+        fbo_settings.fbo = fbo;
+        fbo_settings.w = _width;
+        fbo_settings.h = _height;
+        fbo_settings.internal_format = GL_RGB8;
+        fbo_settings.write();
+
+        IntByReference zero = new IntByReference(0);
+        IntByReference one = new IntByReference(1);
+
+        head_render_param = new MpvLibrary.mpv_render_param();
+        MpvLibrary.mpv_render_param[] render_params = (MpvLibrary.mpv_render_param[]) head_render_param.toArray(4);
+        render_params[0].type = MpvLibrary.MPV_RENDER_PARAM_OPENGL_FBO;
+        render_params[0].data = fbo_settings.getPointer();
+        render_params[0].write();
+        render_params[1].type = MpvLibrary.MPV_RENDER_PARAM_FLIP_Y;
+        render_params[1].data = one.getPointer();
+        render_params[1].write();
+        render_params[2].type = MpvLibrary.MPV_RENDER_PARAM_BLOCK_FOR_TARGET_TIME;
+        render_params[2].data = zero.getPointer();
+        render_params[2].write();
+        render_params[3].type = MpvLibrary.MPV_RENDER_PARAM_INVALID;
+        render_params[3].data = null;
+        render_params[3].write();
+    }
+
+    private void initMpvRenderer(MpvLibrary mpv, long handle) {
+        MpvLibrary.mpv_opengl_init_params gl_init_params = new MpvLibrary.mpv_opengl_init_params();
+        gl_init_params.get_proc_address = get_proc_address;
+        gl_init_params.get_proc_address_ctx = null;
+        gl_init_params.extra_exts = null;
+        gl_init_params.write();
+
+        String MPV_RENDER_API_TYPE_OPENGL_STR = "opengl";
+        Pointer MPV_RENDER_API_TYPE_OPENGL = new Memory(MPV_RENDER_API_TYPE_OPENGL_STR.getBytes().length + 1);
+        MPV_RENDER_API_TYPE_OPENGL.setString(0, MPV_RENDER_API_TYPE_OPENGL_STR);
+
+        MpvLibrary.mpv_render_param head_init_param = new MpvLibrary.mpv_render_param();
+        MpvLibrary.mpv_render_param[] init_params = (MpvLibrary.mpv_render_param[]) head_init_param.toArray(3);
+        init_params[0].type = MpvLibrary.MPV_RENDER_PARAM_API_TYPE;
+        init_params[0].data = MPV_RENDER_API_TYPE_OPENGL;
+        init_params[0].write();
+        init_params[1].type = MpvLibrary.MPV_RENDER_PARAM_OPENGL_INIT_PARAMS;
+        init_params[1].data = gl_init_params.getPointer();
+        init_params[1].write();
+        init_params[2].type = MpvLibrary.MPV_RENDER_PARAM_INVALID;
+        init_params[2].data = null;
+        init_params[2].write();
+
+        mpv_gl = new PointerByReference();
+        mpv_gl.setValue(null);
+
+        // check_error(mpv, mpv.mpv_render_context_create(mpv_gl.getPointer(), handle, param));
+        check_error(mpv, mpv.mpv_render_context_create(mpv_gl, handle, head_init_param));
+
+        mpv.mpv_render_context_set_update_callback(mpv_gl.getValue(), on_mpv_redraw, null);
     }
 
     public static void main(String... args) {

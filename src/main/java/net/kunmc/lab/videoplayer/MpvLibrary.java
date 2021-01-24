@@ -26,6 +26,8 @@ public interface MpvLibrary extends StdCallLibrary {
     int MPV_RENDER_PARAM_OPENGL_INIT_PARAMS = 2;
     int MPV_RENDER_PARAM_OPENGL_FBO = 3;
     int MPV_RENDER_PARAM_FLIP_Y = 4;
+    int MPV_RENDER_PARAM_ADVANCED_CONTROL = 10;
+    int MPV_RENDER_PARAM_BLOCK_FOR_TARGET_TIME = 12;
 
     long mpv_client_api_version();
 
