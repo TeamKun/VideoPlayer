@@ -135,7 +135,7 @@ public class VideoPlayer {
             initMpvFbo(_width, _height, fbo);
 
             // Play this file.
-            check_error(mpv, mpv.mpv_command_async(handle, 0, new String[]{"loadfile", "https://cdn.discordapp.com/attachments/797220314983301150/802874938746208276/Dame_Da_Ne_KUN.mp4", null}));
+            check_error(mpv, mpv.mpv_command_async(handle, 0, new String[]{"loadfile", "https://www.youtube.com/watch?v=-pmokTw1StE&t=4s", null}));
         }
 
         RenderSystem.pushLightingAttributes();
@@ -145,10 +145,10 @@ public class VideoPlayer {
         Vec3d view = Minecraft.getInstance().gameRenderer.getActiveRenderInfo().getProjectedView();
 
         GameSettings gameSettings = Minecraft.getInstance().gameSettings;
-        float distance = Math.min(1, Math.max(0, (float) view.distanceTo(Vec3d.ZERO) / 24f));
-        float volume = Math.max(0.1f, gameSettings.getSoundLevel(SoundCategory.MASTER) * gameSettings.getSoundLevel(SoundCategory.VOICE) - distance);
+        double distance = Math.min(1, Math.max(0, view.distanceTo(Vec3d.ZERO) / 48.0));
+        double distance_vol = Math.pow(1 - distance, 4);
+        double volume = Math.max(0.1f, gameSettings.getSoundLevel(SoundCategory.MASTER) * gameSettings.getSoundLevel(SoundCategory.VOICE) * distance_vol);
         volumeRef.setValue(volume * 100);
-        mpv.mpv_set_property_async(handle, 0, "volume", MpvLibrary.MPV_FORMAT_DOUBLE, volumeRef.getPointer());
 
         MatrixStack stack = event.getMatrixStack();
         stack.translate(-view.x, -view.y, -view.z); // translate
@@ -160,6 +160,7 @@ public class VideoPlayer {
             int flags = mpv.mpv_render_context_update(mpv_gl.getValue());
             if ((flags & MpvLibrary.MPV_RENDER_UPDATE_FRAME) != 0) {
                 mpv.mpv_render_context_render(mpv_gl.getValue(), head_render_param);
+                //mpv.mpv_set_property_async(handle, 0, "volume", MpvLibrary.MPV_FORMAT_DOUBLE, volumeRef.getPointer());
                 Minecraft.getInstance().getFramebuffer().bindFramebuffer(true);
             }
         }
