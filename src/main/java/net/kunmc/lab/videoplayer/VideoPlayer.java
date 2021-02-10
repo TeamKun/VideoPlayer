@@ -135,7 +135,7 @@ public class VideoPlayer {
             initMpvFbo(_width, _height, fbo);
 
             // Play this file.
-            check_error(mpv, mpv.mpv_command_async(handle, 0, new String[]{"loadfile", "https://www.youtube.com/watch?v=-pmokTw1StE&t=4s", null}));
+            check_error(mpv, mpv.mpv_command_async(handle, 0, new String[]{"loadfile", "test.mp4", null}));
         }
 
         RenderSystem.pushLightingAttributes();
@@ -147,8 +147,8 @@ public class VideoPlayer {
         GameSettings gameSettings = Minecraft.getInstance().gameSettings;
         double distance = Math.min(1, Math.max(0, view.distanceTo(Vec3d.ZERO) / 48.0));
         double distance_vol = Math.pow(1 - distance, 4);
-        double volume = Math.max(0.1f, gameSettings.getSoundLevel(SoundCategory.MASTER) * gameSettings.getSoundLevel(SoundCategory.VOICE) * distance_vol);
-        volumeRef.setValue(volume * 100);
+        double volume = gameSettings.getSoundLevel(SoundCategory.MASTER) * gameSettings.getSoundLevel(SoundCategory.VOICE) * distance_vol;
+        volumeRef.setValue(Math.max(0, Math.min(1, volume)) * 100);
 
         MatrixStack stack = event.getMatrixStack();
         stack.translate(-view.x, -view.y, -view.z); // translate
@@ -160,7 +160,9 @@ public class VideoPlayer {
             int flags = mpv.mpv_render_context_update(mpv_gl.getValue());
             if ((flags & MpvLibrary.MPV_RENDER_UPDATE_FRAME) != 0) {
                 mpv.mpv_render_context_render(mpv_gl.getValue(), head_render_param);
-                //mpv.mpv_set_property_async(handle, 0, "volume", MpvLibrary.MPV_FORMAT_DOUBLE, volumeRef.getPointer());
+                glClearColor(0, 0, 0, 0);
+
+                mpv.mpv_set_property_async(handle, 0, "volume", MpvLibrary.MPV_FORMAT_DOUBLE, volumeRef.getPointer());
                 Minecraft.getInstance().getFramebuffer().bindFramebuffer(true);
             }
         }
@@ -183,6 +185,8 @@ public class VideoPlayer {
         RenderSystem.popMatrix();
         RenderSystem.popAttributes();
         RenderSystem.popAttributes();
+
+        mpv.mpv_render_context_report_swap(mpv_gl.getValue());
     }
 
     private int initFbo(int _width, int _height) {
@@ -414,6 +418,25 @@ public class VideoPlayer {
             glEnd();
             glDisable(GL_TEXTURE_2D);
             glBindTexture(GL_TEXTURE_2D, 0);
+
+            LOGGER.info("GL_DITHER: " + glIsEnabled(GL_DITHER));
+
+            int[] viewport = new int[4];
+            glGetIntegerv(GL_VIEWPORT, viewport);
+            LOGGER.info("GL_VIEWPORT: " + String.format("x:%d, y:%d, w:%d, h:%d", viewport[0], viewport[1], viewport[2], viewport[3]));
+
+            int[] scissor = new int[4];
+            glGetIntegerv(GL_SCISSOR_BOX, scissor);
+            LOGGER.info("GL_SCISSOR_BOX: " + String.format("x:%d, y:%d, w:%d, h:%d", scissor[0], scissor[1], scissor[2], scissor[3]));
+
+            int[] clear = new int[4];
+            glGetIntegerv(GL_COLOR_CLEAR_VALUE, clear);
+            LOGGER.info("GL_COLOR_CLEAR_VALUE: " + String.format("x:%d, y:%d, w:%d, h:%d", clear[0], clear[1], clear[2], clear[3]));
+
+            LOGGER.info("GL_BLEND_SRC_RGB: " + glGetInteger(GL_BLEND_SRC_RGB));
+            LOGGER.info("GL_BLEND_SRC_ALPHA: " + glGetInteger(GL_BLEND_SRC_ALPHA));
+            LOGGER.info("GL_BLEND_DST_RGB: " + glGetInteger(GL_BLEND_DST_RGB));
+            LOGGER.info("GL_BLEND_DST_ALPHA: " + glGetInteger(GL_BLEND_DST_ALPHA));
 
             /* Swap front and back buffers */
             glfwSwapBuffers(window);

@@ -79,6 +79,8 @@ public interface MpvLibrary extends StdCallLibrary {
 
     int mpv_set_property_async(long handle, int reply_userdata, String name, int format, Pointer data);
 
+    void mpv_render_context_report_swap(Pointer render_context);
+
     class mpv_event extends Structure {
         public int event_id;
         public int error;
