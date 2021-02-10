@@ -1,4 +1,4 @@
-package net.kunmc.lab.videoplayer;
+package net.kunmc.lab.videoplayer.videoplayer;
 
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
