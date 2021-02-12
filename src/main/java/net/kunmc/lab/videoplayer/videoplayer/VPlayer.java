@@ -78,7 +78,23 @@ public class VPlayer {
             redraw = true;
         };
 
-        public void onRender(MatrixStack stack, VQuad quad) {
+        public void init() {
+            handle = mpv.mpv_create_client(handle_master, null);
+
+            initMpvRenderer(mpv, handle);
+
+            int _width = 480;
+            int _height = 480;
+
+            fbo = initFbo(_width, _height);
+
+            initMpvFbo(_width, _height, fbo);
+
+            // Play this file.
+            check_error(mpv, mpv.mpv_command_async(handle, 0, new String[]{"loadfile", "test.mp4", null}));
+        }
+
+        public void render(MatrixStack stack, VQuad quad) {
             RenderSystem.pushLightingAttributes();
             RenderSystem.pushTextureAttributes();
             RenderSystem.pushMatrix();
@@ -128,6 +144,7 @@ public class VPlayer {
                 case MPV_EVENT_GET_PROPERTY_REPLY:
                 {
                     mpv_event_property prop = new mpv_event_property(event.data);
+                    prop.read();
                     long data = prop.data.getLong(0);
                     switch ((int) event.reply_userdata)
                     {
@@ -163,22 +180,6 @@ public class VPlayer {
             RenderSystem.popAttributes();
 
             mpv.mpv_render_context_report_swap(mpv_gl.getValue());
-        }
-
-        public void init() {
-            handle = mpv.mpv_create_client(handle_master, null);
-
-            initMpvRenderer(mpv, handle);
-
-            int _width = 480;
-            int _height = 480;
-
-            fbo = initFbo(_width, _height);
-
-            initMpvFbo(_width, _height, fbo);
-
-            // Play this file.
-            check_error(mpv, mpv.mpv_command_async(handle, 0, new String[]{"loadfile", "test.mp4", null}));
         }
 
         public void destroy() {

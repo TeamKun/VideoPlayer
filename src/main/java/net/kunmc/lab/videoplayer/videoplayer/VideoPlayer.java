@@ -1,6 +1,10 @@
 package net.kunmc.lab.videoplayer.videoplayer;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.player.ClientPlayerEntity;
+import net.minecraft.util.math.Vec3d;
+import net.minecraftforge.client.event.ClientChatEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -36,30 +40,45 @@ public class VideoPlayer {
         playerClient.init();
     }
 
-    private Deque<VPlayer.VPlayerClient> addQueue = new ArrayDeque<>();
-    private List<VPlayer.VPlayerClient> clients = new ArrayList<>();
-    private Deque<VPlayer.VPlayerClient> removeQueue = new ArrayDeque<>();
+    @Override
+    protected void finalize() throws Throwable {
+        playerClient.destroy();
+    }
+
+    private Deque<VDisplay> addQueue = new ArrayDeque<>();
+    private List<VDisplay> clients = new ArrayList<>();
 
     @SubscribeEvent
     public void onRender(RenderWorldLastEvent event) {
         MatrixStack stack = event.getMatrixStack();
 
         {
-            VPlayer.VPlayerClient add;
+            VDisplay add;
             while ((add = addQueue.poll()) != null) {
-                add.init();
+                add.init(playerClient);
                 clients.add(add);
             }
         }
 
-        for (VPlayer.VPlayerClient client : clients) {
-            client.onRender(stack);
-        }
+        clients.forEach(client -> client.render(stack));
+        clients.removeIf(VDisplay::proceedDestroy);
+    }
 
-        {
-            VPlayer.VPlayerClient remove;
-            while ((remove = removeQueue.poll()) != null) {
-                remove.destroy();
+    @SubscribeEvent
+    public void onTest(ClientChatEvent event) {
+        if (event.getMessage().startsWith("#"))
+            event.setCanceled(true);
+
+        if (event.getMessage().equals("#video")) {
+            ClientPlayerEntity player = Minecraft.getInstance().player;
+            if (player != null) {
+                Vec3d pos = player.getPositionVec();
+                addQueue.add(new VDisplay(new VQuad(new Vec3d[]{
+                        pos.add(0, 1, 0),
+                        pos.add(1, 1, 0),
+                        pos.add(1, 0, 0),
+                        pos.add(0, 0, 0),
+                })));
             }
         }
     }
