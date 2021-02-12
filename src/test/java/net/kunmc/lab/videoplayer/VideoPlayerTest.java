@@ -6,7 +6,7 @@ import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
 import cz.adamh.utils.NativeUtils;
 import net.kunmc.lab.videoplayer.videoplayer.MpvLibrary;
-import net.kunmc.lab.videoplayer.videoplayer.VideoPlayerClient;
+import net.kunmc.lab.videoplayer.videoplayer.VPlayer;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 
@@ -14,13 +14,12 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import static net.kunmc.lab.videoplayer.videoplayer.VideoPlayer.LOGGER;
-import static net.kunmc.lab.videoplayer.videoplayer.VideoPlayerClient.check_error;
+import static net.kunmc.lab.videoplayer.videoplayer.VPlayer.check_error;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL12.GL_CLAMP_TO_EDGE;
 import static org.lwjgl.opengl.GL13.GL_TEXTURE0;
 import static org.lwjgl.opengl.GL13.glActiveTexture;
-import static org.lwjgl.opengl.GL14.*;
 import static org.lwjgl.opengl.GL30.*;
 
 public class VideoPlayerTest {
@@ -43,7 +42,7 @@ public class VideoPlayerTest {
         glfwMakeContextCurrent(window);
         GL.createCapabilities();
 
-        VideoPlayerClient playerClient = new VideoPlayerClient();
+        VPlayer playerClient = new VPlayer();
 
         MpvLibrary mpv = MpvLibrary.INSTANCE;
         long handle = mpv.mpv_create();

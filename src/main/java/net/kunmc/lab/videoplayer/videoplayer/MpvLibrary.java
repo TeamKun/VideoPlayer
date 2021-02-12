@@ -15,10 +15,12 @@ public interface MpvLibrary extends StdCallLibrary {
     /*
      * Event ID's
      */
+    int MPV_EVENT_GET_PROPERTY_REPLY = 3;
     int MPV_EVENT_END_FILE = 7;
     int MPV_EVENT_FILE_LOADED = 8;
     int MPV_EVENT_IDLE = 11;
     int MPV_EVENT_TICK = 14;
+    int MPV_EVENT_VIDEO_RECONFIG = 17;
 
     /*
      * Render Param Type ID
@@ -33,13 +35,18 @@ public interface MpvLibrary extends StdCallLibrary {
 
     int MPV_RENDER_UPDATE_FRAME = 1;
 
+    int MPV_FORMAT_INT64 = 4;
     int MPV_FORMAT_DOUBLE = 5;
 
     long mpv_client_api_version();
 
     long mpv_create();
 
+    long mpv_create_client(long ctx, String name);
+
     int mpv_initialize(long handle);
+
+    void mpv_destroy(long ctx);
 
     int mpv_command(long handle, String[] args);
 
@@ -69,6 +76,8 @@ public interface MpvLibrary extends StdCallLibrary {
 
     int mpv_render_context_create(PointerByReference render_context, long handle, mpv_render_param params);
 
+    void mpv_render_context_free(Pointer render_context);
+
     void mpv_set_wakeup_callback(long handle, on_wakeup callback, Pointer d);
 
     void mpv_render_context_set_update_callback(Pointer render_context, on_render_update callback, Pointer d);
@@ -81,6 +90,8 @@ public interface MpvLibrary extends StdCallLibrary {
 
     void mpv_render_context_report_swap(Pointer render_context);
 
+    int mpv_get_property_async(long handle, int reply_userdata, String name, int format);
+
     class mpv_event extends Structure {
         public int event_id;
         public int error;
@@ -90,6 +101,24 @@ public interface MpvLibrary extends StdCallLibrary {
         @Override
         protected List<String> getFieldOrder() {
             return Arrays.asList("event_id", "error", "reply_userdata", "data");
+        }
+    }
+
+    class mpv_event_property extends Structure {
+        public String name;
+        public int format;
+        public Pointer data;
+
+        public mpv_event_property() {
+        }
+
+        public mpv_event_property(Pointer pointer) {
+            super(pointer);
+        }
+
+        @Override
+        protected List<String> getFieldOrder() {
+            return Arrays.asList("name", "format", "data");
         }
     }
 
