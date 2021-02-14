@@ -13,8 +13,8 @@ import org.lwjgl.opengl.GL11;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import static net.kunmc.lab.videoplayer.videoplayer.VideoPlayer.LOGGER;
 import static net.kunmc.lab.videoplayer.videoplayer.VPlayer.check_error;
+import static net.kunmc.lab.videoplayer.videoplayer.VideoPlayer.LOGGER;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
 import static org.lwjgl.opengl.GL12.GL_CLAMP_TO_EDGE;
@@ -91,8 +91,10 @@ public class VideoPlayerTest {
         // check_error(mpv, mpv.mpv_render_context_create(mpv_gl.getPointer(), handle, param));
         check_error(mpv, mpv.mpv_render_context_create(mpv_gl, handle, head_init_param));
 
-        mpv.mpv_set_wakeup_callback(handle, playerClient.on_wakeup, null);
-        mpv.mpv_render_context_set_update_callback(mpv_gl.getValue(), playerClient.on_mpv_redraw, null);
+        VPlayer.VPlayerClient vclient = playerClient.new VPlayerClient();
+
+        // mpv.mpv_set_wakeup_callback(handle, vclient.on_wakeup, null);
+        mpv.mpv_render_context_set_update_callback(mpv_gl.getValue(), vclient.on_mpv_redraw, null);
 
         // GL Start
 

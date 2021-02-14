@@ -28,7 +28,6 @@ import static org.lwjgl.opengl.GL11.*;
 
 public class VPlayer {
     private MpvLibrary mpv;
-    private long handle_master;
     private static final IntByReference zero = new IntByReference(0);
     private static final IntByReference one = new IntByReference(1);
 
@@ -50,18 +49,9 @@ public class VPlayer {
         }
 
         mpv = MpvLibrary.INSTANCE;
-        handle_master = mpv.mpv_create();
-        if (handle_master == 0)
-            throw new RuntimeException("failed creating context");
-
-//        mpv.mpv_set_option_string(handle, "terminal", "yes");
-        mpv.mpv_set_option_string(handle_master, "msg-level", "all=v");
-
-        check_error(mpv, mpv.mpv_initialize(handle_master));
     }
 
     public void destroy() {
-        mpv.mpv_destroy(handle_master);
     }
 
     public class VPlayerClient {
@@ -79,7 +69,14 @@ public class VPlayer {
         };
 
         public void init() {
-            handle = mpv.mpv_create_client(handle_master, null);
+            handle = mpv.mpv_create();
+            if (handle == 0)
+                throw new RuntimeException("failed creating context");
+
+            // mpv.mpv_set_option_string(handle, "terminal", "yes");
+            mpv.mpv_set_option_string(handle, "msg-level", "all=v");
+
+            check_error(mpv, mpv.mpv_initialize(handle));
 
             initMpvRenderer(mpv, handle);
 
@@ -108,8 +105,8 @@ public class VPlayer {
             double volume = gameSettings.getSoundLevel(SoundCategory.MASTER) * gameSettings.getSoundLevel(SoundCategory.VOICE) * distance_vol;
             volumeRef.setValue(Math.max(0, Math.min(1, volume)) * 100);
 
-            stack.translate(-view.x, -view.y, -view.z); // translate
             RenderSystem.multMatrix(stack.getLast().getMatrix());
+            RenderSystem.translated(-view.x, -view.y, -view.z); // translate
 
             if (redraw) {
                 redraw = false;
