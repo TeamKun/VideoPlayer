@@ -14,11 +14,6 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.List;
-
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod("videoplayer")
 public class VideoPlayer {
@@ -35,33 +30,16 @@ public class VideoPlayer {
     }
 
     private final VPlayer playerClient = new VPlayer();
+    private final VManager manager = new VManager(() -> playerClient.new VPlayerClient());
 
     private void doClientStuff(final FMLClientSetupEvent ev) {
         playerClient.init();
     }
 
-    @Override
-    protected void finalize() throws Throwable {
-        playerClient.destroy();
-    }
-
-    private Deque<VDisplay> addQueue = new ArrayDeque<>();
-    private List<VDisplay> clients = new ArrayList<>();
-
     @SubscribeEvent
     public void onRender(RenderWorldLastEvent event) {
         MatrixStack stack = event.getMatrixStack();
-
-        {
-            VDisplay add;
-            while ((add = addQueue.poll()) != null) {
-                add.init(playerClient);
-                clients.add(add);
-            }
-        }
-
-        clients.forEach(client -> client.render(stack));
-        clients.removeIf(VDisplay::proceedDestroy);
+        manager.render(stack);
     }
 
     @SubscribeEvent
@@ -73,7 +51,7 @@ public class VideoPlayer {
             ClientPlayerEntity player = Minecraft.getInstance().player;
             if (player != null) {
                 Vec3d pos = player.getPositionVec();
-                addQueue.add(new VDisplay(new VQuad(new Vec3d[]{
+                manager.add(new VDisplay(new VQuad(new Vec3d[]{
                         pos.add(0, 1, 0),
                         pos.add(1, 1, 0),
                         pos.add(1, 0, 0),

@@ -3,6 +3,8 @@ package net.kunmc.lab.videoplayer.videoplayer;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import org.apache.commons.lang3.Validate;
 
+import java.util.function.Supplier;
+
 public class VDisplay {
     private final VQuad quad;
     private VState state = VState.CREATED;
@@ -17,9 +19,9 @@ public class VDisplay {
         return state;
     }
 
-    public void init(VPlayer player) {
+    public void init(Supplier<VPlayer.VPlayerClient> clientSupplier) {
         Validate.validState(state == VState.CREATED, "Invalid State");
-        client = player.new VPlayerClient();
+        client = clientSupplier.get();
         client.init();
         state = VState.INITIALIZED;
     }

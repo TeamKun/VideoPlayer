@@ -164,6 +164,7 @@ public class VPlayer {
             Tessellator tessellator = Tessellator.getInstance();
             BufferBuilder bufferbuilder = tessellator.getBuffer();
             bufferbuilder.begin(GL_QUADS, DefaultVertexFormats.POSITION_TEX);
+
             bufferbuilder.pos(quad.vertices[0].x, quad.vertices[0].y, quad.vertices[0].z).tex(0, 1).endVertex();
             bufferbuilder.pos(quad.vertices[1].x, quad.vertices[1].y, quad.vertices[1].z).tex(1, 1).endVertex();
             bufferbuilder.pos(quad.vertices[2].x, quad.vertices[2].y, quad.vertices[2].z).tex(1, 0).endVertex();
