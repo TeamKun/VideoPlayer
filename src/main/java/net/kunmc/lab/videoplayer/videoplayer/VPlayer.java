@@ -11,6 +11,7 @@ import cz.adamh.utils.NativeUtils;
 import net.minecraft.client.GameSettings;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.Matrix4f;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.WorldVertexBufferUploader;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
@@ -92,10 +93,6 @@ public class VPlayer {
         }
 
         public void render(MatrixStack stack, VQuad quad) {
-            RenderSystem.pushLightingAttributes();
-            RenderSystem.pushTextureAttributes();
-            RenderSystem.pushMatrix();
-
             Vec3d view = Minecraft.getInstance().gameRenderer.getActiveRenderInfo().getProjectedView();
             Vec3d pos = Arrays.stream(quad.vertices).reduce((a, b) -> a.add(b).scale(.5)).orElse(Vec3d.ZERO);
 
@@ -105,15 +102,57 @@ public class VPlayer {
             double volume = gameSettings.getSoundLevel(SoundCategory.MASTER) * gameSettings.getSoundLevel(SoundCategory.VOICE) * distance_vol;
             volumeRef.setValue(Math.max(0, Math.min(1, volume)) * 100);
 
-            RenderSystem.multMatrix(stack.getLast().getMatrix());
-            RenderSystem.translated(-view.x, -view.y, -view.z); // translate
+            renderMpv();
 
+            framebuffer.bindFramebufferTexture();
+            RenderSystem.disableCull();
+
+            Tessellator tessellator = Tessellator.getInstance();
+            BufferBuilder bufferbuilder = tessellator.getBuffer();
+            bufferbuilder.begin(GL_QUADS, DefaultVertexFormats.POSITION_TEX);
+
+            stack.push();
+            stack.translate(-view.x, -view.y, -view.z);
+            Matrix4f matrix = stack.getLast().getMatrix();
+            bufferbuilder.pos(matrix, (float) quad.vertices[0].x, (float) quad.vertices[0].y, (float) quad.vertices[0].z).tex(0, 1).endVertex();
+            bufferbuilder.pos(matrix, (float) quad.vertices[1].x, (float) quad.vertices[1].y, (float) quad.vertices[1].z).tex(1, 1).endVertex();
+            bufferbuilder.pos(matrix, (float) quad.vertices[2].x, (float) quad.vertices[2].y, (float) quad.vertices[2].z).tex(1, 0).endVertex();
+            bufferbuilder.pos(matrix, (float) quad.vertices[3].x, (float) quad.vertices[3].y, (float) quad.vertices[3].z).tex(0, 0).endVertex();
+            bufferbuilder.finishDrawing();
+            WorldVertexBufferUploader.draw(bufferbuilder);
+            stack.pop();
+
+            RenderSystem.enableCull();
+            framebuffer.unbindFramebufferTexture();
+
+            mpv.mpv_render_context_report_swap(mpv_gl.getValue());
+        }
+
+        public void destroy() {
+            mpv.mpv_render_context_free(mpv_gl.getValue());
+            mpv_gl.setValue(null);
+            mpv.mpv_terminate_destroy(handle);
+            framebuffer.deleteFramebuffer();
+        }
+
+        private void renderMpv() {
             if (redraw) {
                 redraw = false;
 
                 int flags = mpv.mpv_render_context_update(mpv_gl.getValue());
                 if ((flags & MpvLibrary.MPV_RENDER_UPDATE_FRAME) != 0) {
-                    mpv.mpv_render_context_render(mpv_gl.getValue(), head_render_param);
+                    {
+                        RenderSystem.pushLightingAttributes();
+                        RenderSystem.pushTextureAttributes();
+                        RenderSystem.pushMatrix();
+
+                        mpv.mpv_render_context_render(mpv_gl.getValue(), head_render_param);
+
+                        RenderSystem.popMatrix();
+                        RenderSystem.popAttributes();
+                        RenderSystem.popAttributes();
+                    }
+
                     glClearColor(0, 0, 0, 0);
 
                     mpv.mpv_set_property_async(handle, 0, "volume", MpvLibrary.MPV_FORMAT_DOUBLE, volumeRef.getPointer());
@@ -121,7 +160,7 @@ public class VPlayer {
                 }
             }
 
-            MpvLibrary.mpv_event event = mpv.mpv_wait_event(handle, 0);
+            mpv_event event = mpv.mpv_wait_event(handle, 0);
             switch (event.event_id)
             {
                 case MPV_EVENT_FILE_LOADED:
@@ -156,35 +195,6 @@ public class VPlayer {
                 default:
                     break;
             }
-
-            framebuffer.bindFramebufferTexture();
-            RenderSystem.enableTexture();
-            RenderSystem.disableCull();
-
-            Tessellator tessellator = Tessellator.getInstance();
-            BufferBuilder bufferbuilder = tessellator.getBuffer();
-            bufferbuilder.begin(GL_QUADS, DefaultVertexFormats.POSITION_TEX);
-
-            bufferbuilder.pos(quad.vertices[0].x, quad.vertices[0].y, quad.vertices[0].z).tex(0, 1).endVertex();
-            bufferbuilder.pos(quad.vertices[1].x, quad.vertices[1].y, quad.vertices[1].z).tex(1, 1).endVertex();
-            bufferbuilder.pos(quad.vertices[2].x, quad.vertices[2].y, quad.vertices[2].z).tex(1, 0).endVertex();
-            bufferbuilder.pos(quad.vertices[3].x, quad.vertices[3].y, quad.vertices[3].z).tex(0, 0).endVertex();
-            bufferbuilder.finishDrawing();
-            RenderSystem.enableAlphaTest();
-            WorldVertexBufferUploader.draw(bufferbuilder);
-
-            RenderSystem.popMatrix();
-            RenderSystem.popAttributes();
-            RenderSystem.popAttributes();
-
-            mpv.mpv_render_context_report_swap(mpv_gl.getValue());
-        }
-
-        public void destroy() {
-            mpv.mpv_render_context_free(mpv_gl.getValue());
-            mpv_gl.setValue(null);
-            mpv.mpv_terminate_destroy(handle);
-            framebuffer.deleteFramebuffer();
         }
 
         private int initFbo(int _width, int _height) {
