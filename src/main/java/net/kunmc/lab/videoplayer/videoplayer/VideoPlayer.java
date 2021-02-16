@@ -11,6 +11,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -44,20 +45,29 @@ public class VideoPlayer {
 
     @SubscribeEvent
     public void onTest(ClientChatEvent event) {
-        if (event.getMessage().startsWith("#"))
+        if (event.getMessage().startsWith("#")) {
             event.setCanceled(true);
 
-        if (event.getMessage().equals("#video")) {
+            String file = StringUtils.substringAfter(event.getMessage(), "#");
+
             ClientPlayerEntity player = Minecraft.getInstance().player;
             if (player != null) {
                 Vec3d pos = player.getPositionVec();
                 manager.add(new VDisplay(new VQuad(new Vec3d[]{
-                        pos.add(0, 1, 0),
-                        pos.add(1, 1, 0),
-                        pos.add(1, 0, 0),
+                        pos.add(0, 9, 0),
+                        pos.add(16, 9, 0),
+                        pos.add(16, 0, 0),
                         pos.add(0, 0, 0),
-                })));
+                })).command("loadfile", file));
             }
+        }
+
+        if (event.getMessage().startsWith("!")) {
+            event.setCanceled(true);
+
+            String command = StringUtils.substringAfter(event.getMessage(), "!");
+
+            manager.getClients().forEach(e -> e.command(command.split(" ")));
         }
     }
 }

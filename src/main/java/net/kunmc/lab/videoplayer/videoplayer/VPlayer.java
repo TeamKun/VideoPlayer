@@ -18,9 +18,11 @@ import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.shader.Framebuffer;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.Vec3d;
+import org.apache.commons.lang3.ArrayUtils;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Optional;
 
 import static net.kunmc.lab.videoplayer.videoplayer.MpvLibrary.*;
 import static net.minecraft.client.Minecraft.IS_RUNNING_ON_MAC;
@@ -32,9 +34,15 @@ public class VPlayer {
     private static final IntByReference zero = new IntByReference(0);
     private static final IntByReference one = new IntByReference(1);
 
-    public static void check_error(MpvLibrary mpv, int status) throws RuntimeException {
+    public static void validateStatus(MpvLibrary mpv, int status) throws RuntimeException {
         if (status < 0)
             throw new RuntimeException("mpv API error: " + mpv.mpv_error_string(status));
+    }
+
+    public static Optional<String> getStatus(MpvLibrary mpv, int status) throws RuntimeException {
+        if (status < 0)
+            return Optional.of(mpv.mpv_error_string(status));
+        return Optional.empty();
     }
 
     public static final MpvLibrary.get_proc_address get_proc_address = (ctx, name) -> {
@@ -57,14 +65,16 @@ public class VPlayer {
 
     public class VPlayerClient {
         private long handle;
+        private mpv_opengl_fbo fbo_settings;
         private MpvLibrary.mpv_render_param head_render_param;
         private PointerByReference mpv_gl;
         private Framebuffer framebuffer;
-        private int fbo;
         private final DoubleByReference volumeRef = new DoubleByReference();
 
-        private boolean redraw = false;
+        private long dwidth;
+        private long dheight;
 
+        private boolean redraw = false;
         public final MpvLibrary.on_render_update on_mpv_redraw = d -> {
             redraw = true;
         };
@@ -77,19 +87,19 @@ public class VPlayer {
             // mpv.mpv_set_option_string(handle, "terminal", "yes");
             mpv.mpv_set_option_string(handle, "msg-level", "all=v");
 
-            check_error(mpv, mpv.mpv_initialize(handle));
+            validateStatus(mpv, mpv.mpv_initialize(handle));
 
             initMpvRenderer(mpv, handle);
 
             int _width = 480;
             int _height = 480;
 
-            fbo = initFbo(_width, _height);
+            initFbo(_width, _height);
+        }
 
-            initMpvFbo(_width, _height, fbo);
-
+        public Optional<String> command(String[] args) {
             // Play this file.
-            check_error(mpv, mpv.mpv_command_async(handle, 0, new String[]{"loadfile", "test.mp4", null}));
+            return getStatus(mpv, mpv.mpv_command_async(handle, 0, ArrayUtils.add(args, null)));
         }
 
         public void render(MatrixStack stack, VQuad quad) {
@@ -161,34 +171,28 @@ public class VPlayer {
             }
 
             mpv_event event = mpv.mpv_wait_event(handle, 0);
-            switch (event.event_id)
-            {
-                case MPV_EVENT_FILE_LOADED:
-                {
-                    mpv.mpv_get_property_async(handle, 0, "width", MPV_FORMAT_INT64);
-                    mpv.mpv_get_property_async(handle, 1, "height", MPV_FORMAT_INT64);
+            switch (event.event_id) {
+                case MPV_EVENT_VIDEO_RECONFIG: {
+                    mpv.mpv_get_property_async(handle, 0, "dwidth", MPV_FORMAT_INT64);
+                    mpv.mpv_get_property_async(handle, 1, "dheight", MPV_FORMAT_INT64);
                 }
                 break;
 
-                case MPV_EVENT_VIDEO_RECONFIG:
-                {
-                    mpv.mpv_get_property_async(handle, 2, "dwidth", MPV_FORMAT_INT64);
-                    mpv.mpv_get_property_async(handle, 3, "dheight", MPV_FORMAT_INT64);
-                }
-                break;
-
-                case MPV_EVENT_GET_PROPERTY_REPLY:
-                {
+                case MPV_EVENT_GET_PROPERTY_REPLY: {
                     mpv_event_property prop = new mpv_event_property(event.data);
                     prop.read();
                     long data = prop.data.getLong(0);
-                    switch ((int) event.reply_userdata)
-                    {
-                        case 0: VideoPlayer.LOGGER.info("width: " + data); break;
-                        case 1: VideoPlayer.LOGGER.info("height: " + data); break;
-                        case 2: VideoPlayer.LOGGER.info("dwidth: " + data); break;
-                        case 3: VideoPlayer.LOGGER.info("dheight: " + data); break;
+                    switch ((int) event.reply_userdata) {
+                        case 0:
+                            dwidth = data;
+                            break;
+                        case 1:
+                            dheight = data;
+                            break;
                     }
+
+                    if (dwidth > 0 && dheight > 0)
+                        updateFbo((int) dwidth, (int) dheight);
                 }
                 break;
 
@@ -197,15 +201,12 @@ public class VPlayer {
             }
         }
 
-        private int initFbo(int _width, int _height) {
+        private void initFbo(int _width, int _height) {
             framebuffer = new Framebuffer(_width, _height, true, IS_RUNNING_ON_MAC);
-            framebuffer.setFramebufferColor(0.0F, 0.0F, 0.0F, 0.0F);
-            return framebuffer.framebufferObject;
-        }
+            framebuffer.setFramebufferColor(0.0F, 1.0F, 0.0F, 1.0F);
 
-        private void initMpvFbo(int _width, int _height, int fbo) {
-            MpvLibrary.mpv_opengl_fbo fbo_settings = new MpvLibrary.mpv_opengl_fbo();
-            fbo_settings.fbo = fbo;
+            fbo_settings = new mpv_opengl_fbo();
+            fbo_settings.fbo = framebuffer.framebufferObject;
             fbo_settings.w = _width;
             fbo_settings.h = _height;
             fbo_settings.internal_format = GL_RGB8;
@@ -225,6 +226,14 @@ public class VPlayer {
             render_params[3].type = MpvLibrary.MPV_RENDER_PARAM_INVALID;
             render_params[3].data = null;
             render_params[3].write();
+        }
+
+        private void updateFbo(int _width, int _height) {
+            framebuffer.resize(_width, _height, true);
+
+            fbo_settings.w = _width;
+            fbo_settings.h = _height;
+            fbo_settings.write();
         }
 
         private void initMpvRenderer(MpvLibrary mpv, long handle) {
@@ -257,7 +266,7 @@ public class VPlayer {
             mpv_gl.setValue(null);
 
             // check_error(mpv, mpv.mpv_render_context_create(mpv_gl.getPointer(), handle, param));
-            check_error(mpv, mpv.mpv_render_context_create(mpv_gl, handle, head_init_param));
+            validateStatus(mpv, mpv.mpv_render_context_create(mpv_gl, handle, head_init_param));
 
             mpv.mpv_render_context_set_update_callback(mpv_gl.getValue(), on_mpv_redraw, null);
         }

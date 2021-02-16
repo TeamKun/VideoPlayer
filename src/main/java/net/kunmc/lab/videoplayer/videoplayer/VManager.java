@@ -11,6 +11,7 @@ import java.util.function.Supplier;
 public class VManager {
     private final Supplier<VPlayer.VPlayerClient> clientSupplier;
     private final Deque<VDisplay> addQueue = new ArrayDeque<>();
+
     private final List<VDisplay> clients = new ArrayList<>();
 
     public VManager(Supplier<VPlayer.VPlayerClient> clientSupplier) {
@@ -31,6 +32,10 @@ public class VManager {
         }
 
         clients.forEach(client -> client.render(stack));
-        clients.removeIf(VDisplay::proceedDestroy);
+        clients.removeIf(VDisplay::processDestroy);
+    }
+
+    public List<VDisplay> getClients() {
+        return clients;
     }
 }

@@ -13,7 +13,7 @@ import org.lwjgl.opengl.GL11;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import static net.kunmc.lab.videoplayer.videoplayer.VPlayer.check_error;
+import static net.kunmc.lab.videoplayer.videoplayer.VPlayer.validateStatus;
 import static net.kunmc.lab.videoplayer.videoplayer.VideoPlayer.LOGGER;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
@@ -61,7 +61,7 @@ public class VideoPlayerTest {
         // val.setValue(1);
         // check_error(mpv, mpv.mpv_set_option(handle, "osc", /*MPV_FORMAT_FLAG = */ 3, val.getPointer()));
 
-        check_error(mpv, mpv.mpv_initialize(handle));
+        validateStatus(mpv, mpv.mpv_initialize(handle));
 
         MpvLibrary.mpv_opengl_init_params gl_init_params = new MpvLibrary.mpv_opengl_init_params();
         gl_init_params.get_proc_address = playerClient.get_proc_address;
@@ -89,7 +89,7 @@ public class VideoPlayerTest {
         mpv_gl.setValue(null);
 
         // check_error(mpv, mpv.mpv_render_context_create(mpv_gl.getPointer(), handle, param));
-        check_error(mpv, mpv.mpv_render_context_create(mpv_gl, handle, head_init_param));
+        validateStatus(mpv, mpv.mpv_render_context_create(mpv_gl, handle, head_init_param));
 
         VPlayer.VPlayerClient vclient = playerClient.new VPlayerClient();
 
@@ -149,7 +149,7 @@ public class VideoPlayerTest {
         // GL End
 
         // Play this file.
-        check_error(mpv, mpv.mpv_command(handle, new String[]{"loadfile", "test.mp4", null}));
+        validateStatus(mpv, mpv.mpv_command(handle, new String[]{"loadfile", "test.mp4", null}));
 
         // Let it play, and wait until the user quits.
         //	while (1)
