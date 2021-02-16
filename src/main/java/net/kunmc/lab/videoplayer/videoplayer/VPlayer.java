@@ -10,18 +10,17 @@ import com.sun.jna.ptr.PointerByReference;
 import cz.adamh.utils.NativeUtils;
 import net.minecraft.client.GameSettings;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.Matrix4f;
-import net.minecraft.client.renderer.Tessellator;
-import net.minecraft.client.renderer.WorldVertexBufferUploader;
+import net.minecraft.client.renderer.*;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.shader.Framebuffer;
 import net.minecraft.util.SoundCategory;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Optional;
 
 import static net.kunmc.lab.videoplayer.videoplayer.MpvLibrary.*;
@@ -103,12 +102,19 @@ public class VPlayer {
         }
 
         public void render(MatrixStack stack, VQuad quad) {
-            Vec3d view = Minecraft.getInstance().gameRenderer.getActiveRenderInfo().getProjectedView();
+            ActiveRenderInfo activeRenderInfo = Minecraft.getInstance().gameRenderer.getActiveRenderInfo();
+            Vec3d view = activeRenderInfo.getProjectedView();
+
+            Vec3d dir = new Vec3d(activeRenderInfo.getViewVector());
             Vec3d pos = Arrays.stream(quad.vertices).reduce((a, b) -> a.add(b).scale(.5)).orElse(Vec3d.ZERO);
+            double dot = dir.normalize().dotProduct(pos.subtract(view).normalize());
 
             GameSettings gameSettings = Minecraft.getInstance().gameSettings;
-            double distance = Math.min(1, Math.max(0, view.distanceTo(pos) / 48.0));
-            double distance_vol = Math.pow(1 - distance, 4);
+            double distance_min = Arrays.stream(quad.vertices).map(view::distanceTo).min(Comparator.naturalOrder()).orElse(Double.MAX_VALUE);
+            double size = Arrays.stream(quad.vertices).findFirst().flatMap(p -> Arrays.stream(quad.vertices).skip(1).map(p::distanceTo).min(Comparator.naturalOrder())).orElse(Double.MAX_VALUE);
+            double distance = distance_min / (48.0 + 24.0 * (size - 1));
+            double distance_clamped = MathHelper.clamp(distance, 0, 1);
+            double distance_vol = Math.pow(1 - distance_clamped, 4) * MathHelper.clampedLerp(.5, 1, (1 + dot) / 2);
             double volume = gameSettings.getSoundLevel(SoundCategory.MASTER) * gameSettings.getSoundLevel(SoundCategory.VOICE) * distance_vol;
             volumeRef.setValue(Math.max(0, Math.min(1, volume)) * 100);
 
