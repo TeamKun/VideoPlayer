@@ -5,15 +5,15 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
 import cz.adamh.utils.NativeUtils;
-import net.kunmc.lab.videoplayer.videoplayer.MpvLibrary;
-import net.kunmc.lab.videoplayer.videoplayer.VPlayer;
+import net.kunmc.lab.videoplayer.videoplayer.mpv.MpvLibrary;
+import net.kunmc.lab.videoplayer.videoplayer.video.VRenderer;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL11;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import static net.kunmc.lab.videoplayer.videoplayer.VPlayer.validateStatus;
+import static net.kunmc.lab.videoplayer.videoplayer.video.VPlayer.validateStatus;
 import static net.kunmc.lab.videoplayer.videoplayer.VideoPlayer.LOGGER;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.opengl.GL11.*;
@@ -91,7 +91,7 @@ public class VideoPlayerTest {
         // check_error(mpv, mpv.mpv_render_context_create(mpv_gl.getPointer(), handle, param));
         validateStatus(mpv, mpv.mpv_render_context_create(mpv_gl, handle, head_init_param));
 
-        VPlayer.VPlayerClient vclient = playerClient.new VPlayerClient();
+        VRenderer vclient = new VRenderer();
 
         // mpv.mpv_set_wakeup_callback(handle, vclient.on_wakeup, null);
         mpv.mpv_render_context_set_update_callback(mpv_gl.getValue(), vclient.on_mpv_redraw, null);

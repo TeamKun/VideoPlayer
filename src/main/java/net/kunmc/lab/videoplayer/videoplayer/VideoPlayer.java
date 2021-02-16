@@ -1,6 +1,10 @@
 package net.kunmc.lab.videoplayer.videoplayer;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
+import net.kunmc.lab.videoplayer.videoplayer.mpv.MPlayer;
+import net.kunmc.lab.videoplayer.videoplayer.video.VDisplay;
+import net.kunmc.lab.videoplayer.videoplayer.video.VManager;
+import net.kunmc.lab.videoplayer.videoplayer.video.VQuad;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.util.math.Vec3d;
@@ -30,11 +34,10 @@ public class VideoPlayer {
         MinecraftForge.EVENT_BUS.register(this);
     }
 
-    private final VPlayer playerClient = new VPlayer();
-    private final VManager manager = new VManager(() -> playerClient.new VPlayerClient());
+    private final VManager manager = new VManager();
 
     private void doClientStuff(final FMLClientSetupEvent ev) {
-        playerClient.init();
+        MPlayer.init();
     }
 
     @SubscribeEvent

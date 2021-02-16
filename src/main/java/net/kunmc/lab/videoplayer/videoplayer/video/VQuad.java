@@ -1,4 +1,4 @@
-package net.kunmc.lab.videoplayer.videoplayer;
+package net.kunmc.lab.videoplayer.videoplayer.video;
 
 import net.minecraft.util.math.Vec3d;
 

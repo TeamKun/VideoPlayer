@@ -1,16 +1,15 @@
-package net.kunmc.lab.videoplayer.videoplayer;
+package net.kunmc.lab.videoplayer.videoplayer.video;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import org.apache.commons.lang3.Validate;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.function.Supplier;
 
 public class VDisplay {
     private final VQuad quad;
     private VState state = VState.CREATED;
-    private VPlayer.VPlayerClient client;
+    private VPlayerClient client;
     private boolean destroyRequested;
     private final Deque<String[]> commandQueue = new ArrayDeque<>();
 
@@ -22,12 +21,17 @@ public class VDisplay {
         return state;
     }
 
-    public void init(Supplier<VPlayer.VPlayerClient> clientSupplier) {
+    public void init() {
         Validate.validState(state == VState.CREATED, "Invalid State");
-        client = clientSupplier.get();
+        client = new VPlayerClient();
         client.init();
         processCommand();
         state = VState.INITIALIZED;
+    }
+
+    public void renderFrame() {
+        Validate.validState(state == VState.INITIALIZED, "Invalid State");
+        client.renderFrame();
     }
 
     public void render(MatrixStack stack) {
@@ -57,14 +61,14 @@ public class VDisplay {
     private void commandLater(String[] args) {
         commandQueue.add(args);
     }
-    
+
     private void processCommand() {
         String[] command;
         while ((command = commandQueue.poll()) != null) {
             client.command(command);
         }
     }
-    
+
     public boolean processDestroy() {
         Validate.validState(state == VState.INITIALIZED, "Invalid State");
         if (destroyRequested) {
