@@ -24,7 +24,7 @@ public class VManager {
         {
             VDisplay add;
             while ((add = addQueue.poll()) != null) {
-                add.init();
+                add.processRequest();
                 displays.add(add);
             }
         }
@@ -35,8 +35,15 @@ public class VManager {
             VRenderer.endRenderFrame();
         }
 
-        displays.forEach(client -> client.render(stack));
+        displays.forEach(display -> display.render(stack));
 
-        displays.removeIf(VDisplay::processDestroy);
+        displays.forEach(display -> {
+            if (display.canSee())
+                display.validate();
+            else
+                display.invalidate();
+        });
+
+        displays.removeIf(VDisplay::processRequest);
     }
 }

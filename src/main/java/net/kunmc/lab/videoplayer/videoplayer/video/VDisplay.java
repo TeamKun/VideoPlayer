@@ -1,14 +1,17 @@
 package net.kunmc.lab.videoplayer.videoplayer.video;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
-import org.apache.commons.lang3.Validate;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.ActiveRenderInfo;
+import net.minecraft.util.math.Vec3d;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
 
 public class VDisplay {
     private VQuad quad;
-    private VState state = VState.CREATED;
+    private VState state = VState.INVALIDATED;
+    private VRequestedState requestedState = VRequestedState.VALIDATE;
     private VPlayerClient client;
     private boolean destroyRequested;
     private final Deque<String[]> commandQueue = new ArrayDeque<>();
@@ -21,49 +24,79 @@ public class VDisplay {
         return quad;
     }
 
-    public VState getState() {
-        return state;
-    }
-
-    public void init() {
-        Validate.validState(state == VState.CREATED, "Invalid State");
-        client = new VPlayerClient();
-        client.init();
-        processCommand();
-        state = VState.INITIALIZED;
-    }
-
     public void renderFrame() {
-        Validate.validState(state == VState.INITIALIZED, "Invalid State");
+        if (state != VState.VALIDATED)
+            return;
         client.renderFrame();
     }
 
     public void render(MatrixStack stack) {
-        Validate.validState(state == VState.INITIALIZED, "Invalid State");
+        if (state != VState.VALIDATED)
+            return;
         if (quad != null)
             client.render(stack, quad);
     }
 
+    public boolean canSee() {
+        if (destroyRequested)
+            return false;
+        ActiveRenderInfo activeRenderInfo = Minecraft.getInstance().gameRenderer.getActiveRenderInfo();
+        Vec3d view = activeRenderInfo.getProjectedView();
+        double distance = quad.getNearestDistance(view);
+        return distance < 96 && activeRenderInfo.getRenderViewEntity().dimension.equals(quad.dimension);
+    }
+
+    public void validate() {
+        if (state != VState.INVALIDATED)
+            return;
+        requestedState = VRequestedState.VALIDATE;
+    }
+
+    public void invalidate() {
+        if (state != VState.VALIDATED)
+            return;
+        requestedState = VRequestedState.INVALIDATE;
+    }
+
     public void destroy() {
-        Validate.validState(state == VState.INITIALIZED, "Invalid State");
+        invalidate();
         destroyRequested = true;
+    }
+
+    public boolean isDestroyed() {
+        return state == VState.INVALIDATED && destroyRequested;
+    }
+
+    public boolean processRequest() {
+        switch (requestedState) {
+            case VALIDATE:
+                client = new VPlayerClient();
+                client.init();
+                processCommand();
+                state = VState.VALIDATED;
+                requestedState = VRequestedState.NONE;
+                break;
+            case INVALIDATE:
+                client.destroy();
+                client = null;
+                state = VState.INVALIDATED;
+                requestedState = VRequestedState.NONE;
+                break;
+        }
+        return isDestroyed();
     }
 
     public void command(String... args) {
         switch (state) {
-            case CREATED:
-                commandLater(args);
+            case INVALIDATED:
+                commandQueue.add(args);
                 break;
-            case INITIALIZED:
+            case VALIDATED:
                 client.command(args);
                 break;
             default:
                 throw new IllegalStateException("Invalid State");
         }
-    }
-
-    private void commandLater(String[] args) {
-        commandQueue.add(args);
     }
 
     private void processCommand() {
@@ -73,20 +106,14 @@ public class VDisplay {
         }
     }
 
-    public boolean processDestroy() {
-        Validate.validState(state == VState.INITIALIZED, "Invalid State");
-        if (destroyRequested) {
-            client.destroy();
-            client = null;
-            state = VState.DESTROYED;
-            return true;
-        }
-        return false;
+    private enum VState {
+        INVALIDATED,
+        VALIDATED,
     }
 
-    public enum VState {
-        CREATED,
-        INITIALIZED,
-        DESTROYED,
+    private enum VRequestedState {
+        NONE,
+        VALIDATE,
+        INVALIDATE,
     }
 }

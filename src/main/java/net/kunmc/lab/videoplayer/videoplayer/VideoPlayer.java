@@ -59,6 +59,7 @@ public class VideoPlayer {
 
                 VDisplay display = new VDisplay();
                 display.setQuad(new VQuad(
+                        player.dimension,
                         pos.add(0, 9, 0),
                         pos.add(16, 9, 0),
                         pos.add(16, 0, 0),
