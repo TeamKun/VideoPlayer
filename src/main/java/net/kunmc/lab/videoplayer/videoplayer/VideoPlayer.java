@@ -56,12 +56,17 @@ public class VideoPlayer {
             ClientPlayerEntity player = Minecraft.getInstance().player;
             if (player != null) {
                 Vec3d pos = player.getPositionVec();
-                manager.add(new VDisplay(new VQuad(new Vec3d[]{
+
+                VDisplay display = new VDisplay();
+                display.setQuad(new VQuad(
                         pos.add(0, 9, 0),
                         pos.add(16, 9, 0),
                         pos.add(16, 0, 0),
-                        pos.add(0, 0, 0),
-                })).command("loadfile", file));
+                        pos.add(0, 0, 0)
+                ));
+                display.command("loadfile", file);
+
+                manager.add(display);
             }
         }
 
@@ -70,7 +75,7 @@ public class VideoPlayer {
 
             String command = StringUtils.substringAfter(event.getMessage(), "!");
 
-            manager.getClients().forEach(e -> e.command(command.split(" ")));
+            manager.getDisplays().forEach(e -> e.command(command.split(" ")));
         }
     }
 }

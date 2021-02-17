@@ -11,9 +11,6 @@ import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 
-import java.util.Arrays;
-import java.util.Comparator;
-
 import static net.minecraft.client.Minecraft.IS_RUNNING_ON_MAC;
 import static org.lwjgl.opengl.GL11.GL_QUADS;
 import static org.lwjgl.opengl.GL11.glClearColor;
@@ -56,13 +53,11 @@ public class VRenderer {
         Vec3d view = activeRenderInfo.getProjectedView();
 
         Vec3d dir = new Vec3d(activeRenderInfo.getViewVector());
-        Vec3d pos = Arrays.stream(quad.vertices).reduce((a, b) -> a.add(b).scale(.5)).orElse(Vec3d.ZERO);
-        double dot = dir.normalize().dotProduct(pos.subtract(view).normalize());
+        double dot = dir.normalize().dotProduct(quad.getCenter().subtract(view).normalize());
 
         GameSettings gameSettings = Minecraft.getInstance().gameSettings;
-        double distance_min = Arrays.stream(quad.vertices).map(view::distanceTo).min(Comparator.naturalOrder()).orElse(Double.MAX_VALUE);
-        double size = Arrays.stream(quad.vertices).findFirst().flatMap(p -> Arrays.stream(quad.vertices).skip(1).map(p::distanceTo).min(Comparator.naturalOrder())).orElse(Double.MAX_VALUE);
-        double distance = distance_min / (48.0 + 24.0 * (size - 1));
+        double distance_min = quad.getNearestDistance(view);
+        double distance = distance_min / (48.0 + 24.0 * (quad.getSize() - 1));
         double distance_clamped = MathHelper.clamp(distance, 0, 1);
         double distance_vol = Math.pow(1 - distance_clamped, 4) * MathHelper.clampedLerp(.5, 1, (1 + dot) / 2);
         return gameSettings.getSoundLevel(SoundCategory.MASTER) * gameSettings.getSoundLevel(SoundCategory.VOICE) * distance_vol;

@@ -10,7 +10,11 @@ import java.util.List;
 public class VManager {
     private final Deque<VDisplay> addQueue = new ArrayDeque<>();
 
-    private final List<VDisplay> clients = new ArrayList<>();
+    private final List<VDisplay> displays = new ArrayList<>();
+
+    public List<VDisplay> getDisplays() {
+        return displays;
+    }
 
     public void add(VDisplay display) {
         addQueue.add(display);
@@ -21,22 +25,18 @@ public class VManager {
             VDisplay add;
             while ((add = addQueue.poll()) != null) {
                 add.init();
-                clients.add(add);
+                displays.add(add);
             }
         }
 
         {
             VRenderer.beginRenderFrame();
-            clients.forEach(VDisplay::renderFrame);
+            displays.forEach(VDisplay::renderFrame);
             VRenderer.endRenderFrame();
         }
 
-        clients.forEach(client -> client.render(stack));
+        displays.forEach(client -> client.render(stack));
 
-        clients.removeIf(VDisplay::processDestroy);
-    }
-
-    public List<VDisplay> getClients() {
-        return clients;
+        displays.removeIf(VDisplay::processDestroy);
     }
 }

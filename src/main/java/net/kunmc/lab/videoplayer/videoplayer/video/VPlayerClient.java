@@ -5,13 +5,13 @@ import net.kunmc.lab.videoplayer.videoplayer.mpv.MPlayerClient;
 
 import java.util.Optional;
 
-public class VPlayerClient {
+public class VPlayerClient implements VEventHandler {
     private final MPlayerClient playerClient;
     private final VRenderer renderer;
 
     public VPlayerClient() {
-        this.playerClient = new MPlayerClient();
-        this.renderer = new VRenderer();
+        playerClient = new MPlayerClient();
+        renderer = new VRenderer();
     }
 
     public void init() {
@@ -31,11 +31,12 @@ public class VPlayerClient {
 
     public void render(MatrixStack stack, VQuad quad) {
         playerClient.setVolume(renderer.getVolume(quad));
-        playerClient.processEvent(this::onResize);
+        playerClient.processEvent(this);
         renderer.render(stack, quad);
     }
 
-    private void onResize(int width, int height) {
+    @Override
+    public void onResize(int width, int height) {
         playerClient.updateFbo(width, height);
         renderer.updateFbo(width, height);
     }

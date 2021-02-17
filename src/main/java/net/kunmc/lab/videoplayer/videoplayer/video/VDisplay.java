@@ -7,14 +7,18 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 
 public class VDisplay {
-    private final VQuad quad;
+    private VQuad quad;
     private VState state = VState.CREATED;
     private VPlayerClient client;
     private boolean destroyRequested;
     private final Deque<String[]> commandQueue = new ArrayDeque<>();
 
-    public VDisplay(VQuad quad) {
-        this.quad = quad;
+    public void setQuad(VQuad quadIn) {
+        quad = quadIn;
+    }
+
+    public VQuad getQuad() {
+        return quad;
     }
 
     public VState getState() {
@@ -36,7 +40,8 @@ public class VDisplay {
 
     public void render(MatrixStack stack) {
         Validate.validState(state == VState.INITIALIZED, "Invalid State");
-        client.render(stack, quad);
+        if (quad != null)
+            client.render(stack, quad);
     }
 
     public void destroy() {
@@ -44,7 +49,7 @@ public class VDisplay {
         destroyRequested = true;
     }
 
-    public VDisplay command(String... args) {
+    public void command(String... args) {
         switch (state) {
             case CREATED:
                 commandLater(args);
@@ -55,7 +60,6 @@ public class VDisplay {
             default:
                 throw new IllegalStateException("Invalid State");
         }
-        return this;
     }
 
     private void commandLater(String[] args) {
