@@ -35,7 +35,8 @@ public class MPlayerClient {
             throw new RuntimeException("failed creating context");
 
         // mpv.mpv_set_option_string(handle, "terminal", "yes");
-        mpv.mpv_set_option_string(handle, "msg-level", "all=v");
+        // mpv.mpv_set_option_string(handle, "msg-level", "all=v");
+        mpv.mpv_set_option_string(handle, "keep-open", "yes");
 
         validateStatus(mpv, mpv.mpv_initialize(handle));
 

@@ -13,6 +13,7 @@ public class VDisplay {
     private VState state = VState.INVALIDATED;
     private VRequestedState requestedState = VRequestedState.VALIDATE;
     private VPlayerClient client;
+    private final VPlayStateStore playStateStore = new VPlayStateStore();
     private boolean destroyRequested;
     private final Deque<String[]> commandQueue = new ArrayDeque<>();
 
@@ -22,6 +23,10 @@ public class VDisplay {
 
     public VQuad getQuad() {
         return quad;
+    }
+
+    public void dispatchPlayState(VPlayState action) {
+        playStateStore.dispatch(this, action);
     }
 
     public void renderFrame() {
