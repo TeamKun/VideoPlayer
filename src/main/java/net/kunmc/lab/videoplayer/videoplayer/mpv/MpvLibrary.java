@@ -15,28 +15,56 @@ public interface MpvLibrary extends StdCallLibrary {
     /*
      * Event ID's
      */
-    int MPV_EVENT_GET_PROPERTY_REPLY = 3;
-    int MPV_EVENT_END_FILE = 7;
-    int MPV_EVENT_FILE_LOADED = 8;
-    int MPV_EVENT_IDLE = 11;
-    int MPV_EVENT_TICK = 14;
-    int MPV_EVENT_VIDEO_RECONFIG = 17;
+    interface mpv_event_id {
+        int MPV_EVENT_NONE = 0;
+        int MPV_EVENT_SHUTDOWN = 1;
+        int MPV_EVENT_LOG_MESSAGE = 2;
+        int MPV_EVENT_GET_PROPERTY_REPLY = 3;
+        int MPV_EVENT_SET_PROPERTY_REPLY = 4;
+        int MPV_EVENT_COMMAND_REPLY = 5;
+        int MPV_EVENT_START_FILE = 6;
+        int MPV_EVENT_END_FILE = 7;
+        int MPV_EVENT_FILE_LOADED = 8;
+        int MPV_EVENT_TRACKS_CHANGED = 9;
+        int MPV_EVENT_TRACK_SWITCHED = 10;
+        int MPV_EVENT_IDLE = 11;
+        int MPV_EVENT_PAUSE = 12;
+        int MPV_EVENT_UNPAUSE = 13;
+        int MPV_EVENT_TICK = 14;
+        int MPV_EVENT_SCRIPT_INPUT_DISPATCH = 15;
+        int MPV_EVENT_CLIENT_MESSAGE = 16;
+        int MPV_EVENT_VIDEO_RECONFIG = 17;
+        int MPV_EVENT_AUDIO_RECONFIG = 18;
+        int MPV_EVENT_METADATA_UPDATE = 19;
+        int MPV_EVENT_SEEK = 20;
+        int MPV_EVENT_PLAYBACK_RESTART = 21;
+        int MPV_EVENT_PROPERTY_CHANGE = 22;
+        int MPV_EVENT_CHAPTER_CHANGE = 23;
+        int MPV_EVENT_QUEUE_OVERFLOW = 24;
+        int MPV_EVENT_HOOK = 25;
+    }
 
     /*
      * Render Param Type ID
      */
-    int MPV_RENDER_PARAM_INVALID = 0;
-    int MPV_RENDER_PARAM_API_TYPE = 1;
-    int MPV_RENDER_PARAM_OPENGL_INIT_PARAMS = 2;
-    int MPV_RENDER_PARAM_OPENGL_FBO = 3;
-    int MPV_RENDER_PARAM_FLIP_Y = 4;
-    int MPV_RENDER_PARAM_ADVANCED_CONTROL = 10;
-    int MPV_RENDER_PARAM_BLOCK_FOR_TARGET_TIME = 12;
+    interface mpv_render_param_type {
+        int MPV_RENDER_PARAM_INVALID = 0;
+        int MPV_RENDER_PARAM_API_TYPE = 1;
+        int MPV_RENDER_PARAM_OPENGL_INIT_PARAMS = 2;
+        int MPV_RENDER_PARAM_OPENGL_FBO = 3;
+        int MPV_RENDER_PARAM_FLIP_Y = 4;
+        int MPV_RENDER_PARAM_ADVANCED_CONTROL = 10;
+        int MPV_RENDER_PARAM_BLOCK_FOR_TARGET_TIME = 12;
+    }
 
-    int MPV_RENDER_UPDATE_FRAME = 1;
+    interface mpv_render_update_flag {
+        int MPV_RENDER_UPDATE_FRAME = 1;
+    }
 
-    int MPV_FORMAT_INT64 = 4;
-    int MPV_FORMAT_DOUBLE = 5;
+    interface mpv_format {
+        int MPV_FORMAT_INT64 = 4;
+        int MPV_FORMAT_DOUBLE = 5;
+    }
 
     long mpv_client_api_version();
 

@@ -1,6 +1,7 @@
 package net.kunmc.lab.videoplayer.videoplayer.video;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
+import net.kunmc.lab.videoplayer.videoplayer.model.Quad;
 import net.kunmc.lab.videoplayer.videoplayer.mpv.MPlayerClient;
 
 import java.util.Optional;
@@ -29,7 +30,7 @@ public class VPlayerClient implements VEventHandler {
         playerClient.render();
     }
 
-    public void render(MatrixStack stack, VQuad quad) {
+    public void render(MatrixStack stack, Quad quad) {
         playerClient.setVolume(renderer.getVolume(quad));
         playerClient.processEvent(this);
         renderer.render(stack, quad);

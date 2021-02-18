@@ -2,6 +2,7 @@ package net.kunmc.lab.videoplayer.videoplayer.video;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
+import net.kunmc.lab.videoplayer.videoplayer.model.Quad;
 import net.minecraft.client.GameSettings;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.*;
@@ -22,7 +23,7 @@ public class VRenderer {
         return framebuffer;
     }
 
-    public void render(MatrixStack stack, VQuad quad) {
+    public void render(MatrixStack stack, Quad quad) {
         ActiveRenderInfo activeRenderInfo = Minecraft.getInstance().gameRenderer.getActiveRenderInfo();
         Vec3d view = activeRenderInfo.getProjectedView();
 
@@ -48,7 +49,7 @@ public class VRenderer {
         framebuffer.unbindFramebufferTexture();
     }
 
-    public double getVolume(VQuad quad) {
+    public double getVolume(Quad quad) {
         ActiveRenderInfo activeRenderInfo = Minecraft.getInstance().gameRenderer.getActiveRenderInfo();
         Vec3d view = activeRenderInfo.getProjectedView();
 

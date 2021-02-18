@@ -1,5 +1,6 @@
 package net.kunmc.lab.videoplayer.videoplayer.video;
 
+import net.kunmc.lab.videoplayer.videoplayer.model.PlayState;
 import net.kunmc.lab.videoplayer.videoplayer.util.Timer;
 
 import java.util.Objects;
@@ -9,7 +10,15 @@ public class VPlayStateStore {
     private final Timer timer = Timer.createUnstarted();
     private boolean paused;
 
-    public void dispatch(VDisplay display, VPlayState action) {
+    public PlayState fetch() {
+        PlayState state = new PlayState();
+        state.file = file;
+        state.time = timer.getTime();
+        state.paused = paused;
+        return state;
+    }
+
+    public void dispatch(VDisplay display, PlayState action) {
         if (!Objects.equals(file, action.file)) {
             file = action.file;
             display.command("loadfile", action.file);

@@ -81,6 +81,7 @@ public class Timer {
      */
     public void pause() {
         this.paused = true;
+        this.lastTime = currentTime - this.startTime;
     }
 
     /**

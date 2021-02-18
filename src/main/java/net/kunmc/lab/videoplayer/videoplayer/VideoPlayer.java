@@ -2,9 +2,11 @@ package net.kunmc.lab.videoplayer.videoplayer;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.kunmc.lab.videoplayer.videoplayer.mpv.MPlayer;
+import net.kunmc.lab.videoplayer.videoplayer.util.Timer;
 import net.kunmc.lab.videoplayer.videoplayer.video.VDisplay;
-import net.kunmc.lab.videoplayer.videoplayer.video.VManager;
-import net.kunmc.lab.videoplayer.videoplayer.video.VQuad;
+import net.kunmc.lab.videoplayer.videoplayer.video.VDisplayManager;
+import net.kunmc.lab.videoplayer.videoplayer.model.PlayState;
+import net.kunmc.lab.videoplayer.videoplayer.model.Quad;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.util.math.Vec3d;
@@ -18,6 +20,8 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.util.UUID;
 
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod("videoplayer")
@@ -34,7 +38,7 @@ public class VideoPlayer {
         MinecraftForge.EVENT_BUS.register(this);
     }
 
-    private final VManager manager = new VManager();
+    private final VDisplayManager manager = new VDisplayManager();
 
     private void doClientStuff(final FMLClientSetupEvent ev) {
         MPlayer.init();
@@ -42,6 +46,7 @@ public class VideoPlayer {
 
     @SubscribeEvent
     public void onRender(RenderWorldLastEvent event) {
+        Timer.tick();
         MatrixStack stack = event.getMatrixStack();
         manager.render(stack);
     }
@@ -57,17 +62,19 @@ public class VideoPlayer {
             if (player != null) {
                 Vec3d pos = player.getPositionVec();
 
-                VDisplay display = new VDisplay();
-                display.setQuad(new VQuad(
+                VDisplay display = manager.create(UUID.randomUUID());
+                display.setQuad(new Quad(
                         player.dimension,
                         pos.add(0, 9, 0),
                         pos.add(16, 9, 0),
                         pos.add(16, 0, 0),
                         pos.add(0, 0, 0)
                 ));
-                display.command("loadfile", file);
-
-                manager.add(display);
+                PlayState state = new PlayState();
+                state.file = file;
+                state.paused = false;
+                state.time = -3;
+                display.dispatchState(state);
             }
         }
 
@@ -75,8 +82,29 @@ public class VideoPlayer {
             event.setCanceled(true);
 
             String command = StringUtils.substringAfter(event.getMessage(), "!");
-
-            manager.getDisplays().forEach(e -> e.command(command.split(" ")));
+            switch (command) {
+                case "<":
+                    manager.list().forEach(e -> {
+                        PlayState state = e.fetchState();
+                        state.time -= 5;
+                        e.dispatchState(state);
+                    });
+                    break;
+                case ">":
+                    manager.list().forEach(e -> {
+                        PlayState state = e.fetchState();
+                        state.time += 5;
+                        e.dispatchState(state);
+                    });
+                    break;
+                case "=":
+                    manager.list().forEach(e -> {
+                        PlayState state = e.fetchState();
+                        state.paused = !state.paused;
+                        e.dispatchState(state);
+                    });
+                    break;
+            }
         }
     }
 }

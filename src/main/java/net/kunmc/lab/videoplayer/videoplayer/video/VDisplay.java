@@ -1,6 +1,9 @@
 package net.kunmc.lab.videoplayer.videoplayer.video;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
+import net.kunmc.lab.videoplayer.videoplayer.model.Display;
+import net.kunmc.lab.videoplayer.videoplayer.model.PlayState;
+import net.kunmc.lab.videoplayer.videoplayer.model.Quad;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.util.math.Vec3d;
@@ -8,8 +11,8 @@ import net.minecraft.util.math.Vec3d;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
-public class VDisplay {
-    private VQuad quad;
+public class VDisplay implements Display {
+    private Quad quad;
     private VState state = VState.INVALIDATED;
     private VRequestedState requestedState = VRequestedState.VALIDATE;
     private VPlayerClient client;
@@ -17,15 +20,23 @@ public class VDisplay {
     private boolean destroyRequested;
     private final Deque<String[]> commandQueue = new ArrayDeque<>();
 
-    public void setQuad(VQuad quadIn) {
+    @Override
+    public void setQuad(Quad quadIn) {
         quad = quadIn;
     }
 
-    public VQuad getQuad() {
+    @Override
+    public Quad getQuad() {
         return quad;
     }
 
-    public void dispatchPlayState(VPlayState action) {
+    @Override
+    public PlayState fetchState() {
+        return playStateStore.fetch();
+    }
+
+    @Override
+    public void dispatchState(PlayState action) {
         playStateStore.dispatch(this, action);
     }
 

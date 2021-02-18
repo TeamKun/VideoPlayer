@@ -1,4 +1,4 @@
-package net.kunmc.lab.videoplayer.videoplayer.video;
+package net.kunmc.lab.videoplayer.videoplayer.model;
 
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.dimension.DimensionType;
@@ -7,11 +7,11 @@ import org.apache.commons.lang3.Validate;
 import java.util.Arrays;
 import java.util.Comparator;
 
-public class VQuad {
+public class Quad {
     public final DimensionType dimension;
     public final Vec3d[] vertices;
 
-    public VQuad(DimensionType dimensionIn, Vec3d... verticesIn) {
+    public Quad(DimensionType dimensionIn, Vec3d... verticesIn) {
         Validate.validIndex(verticesIn, 3, "VQuad needs 4 vertices");
         dimension = dimensionIn;
         vertices = verticesIn;

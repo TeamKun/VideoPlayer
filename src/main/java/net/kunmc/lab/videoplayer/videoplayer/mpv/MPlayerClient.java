@@ -12,6 +12,12 @@ import java.util.Optional;
 import static net.kunmc.lab.videoplayer.videoplayer.mpv.MPlayer.get_proc_address;
 import static net.kunmc.lab.videoplayer.videoplayer.mpv.MPlayer.*;
 import static net.kunmc.lab.videoplayer.videoplayer.mpv.MpvLibrary.*;
+import static net.kunmc.lab.videoplayer.videoplayer.mpv.MpvLibrary.mpv_event_id.MPV_EVENT_GET_PROPERTY_REPLY;
+import static net.kunmc.lab.videoplayer.videoplayer.mpv.MpvLibrary.mpv_event_id.MPV_EVENT_VIDEO_RECONFIG;
+import static net.kunmc.lab.videoplayer.videoplayer.mpv.MpvLibrary.mpv_format.MPV_FORMAT_DOUBLE;
+import static net.kunmc.lab.videoplayer.videoplayer.mpv.MpvLibrary.mpv_format.MPV_FORMAT_INT64;
+import static net.kunmc.lab.videoplayer.videoplayer.mpv.MpvLibrary.mpv_render_param_type.*;
+import static net.kunmc.lab.videoplayer.videoplayer.mpv.MpvLibrary.mpv_render_update_flag.MPV_RENDER_UPDATE_FRAME;
 import static org.lwjgl.opengl.GL11.GL_RGB8;
 
 public class MPlayerClient {
@@ -69,9 +75,9 @@ public class MPlayerClient {
             redraw = false;
 
             int flags = mpv.mpv_render_context_update(mpv_gl.getValue());
-            if ((flags & MpvLibrary.MPV_RENDER_UPDATE_FRAME) != 0) {
+            if ((flags & MPV_RENDER_UPDATE_FRAME) != 0) {
                 mpv.mpv_render_context_render(mpv_gl.getValue(), head_render_param);
-                mpv.mpv_set_property_async(handle, 0, "volume", MpvLibrary.MPV_FORMAT_DOUBLE, volumeRef.getPointer());
+                mpv.mpv_set_property_async(handle, 0, "volume", MPV_FORMAT_DOUBLE, volumeRef.getPointer());
             }
         }
     }
@@ -132,16 +138,16 @@ public class MPlayerClient {
 
         mpv_render_param head_init_param = new mpv_render_param();
         mpv_render_param[] init_params = (mpv_render_param[]) head_init_param.toArray(4);
-        init_params[0].type = MpvLibrary.MPV_RENDER_PARAM_API_TYPE;
+        init_params[0].type = MPV_RENDER_PARAM_API_TYPE;
         init_params[0].data = MPV_RENDER_API_TYPE_OPENGL;
         init_params[0].write();
-        init_params[1].type = MpvLibrary.MPV_RENDER_PARAM_OPENGL_INIT_PARAMS;
+        init_params[1].type = MPV_RENDER_PARAM_OPENGL_INIT_PARAMS;
         init_params[1].data = gl_init_params.getPointer();
         init_params[1].write();
-        init_params[2].type = MpvLibrary.MPV_RENDER_PARAM_ADVANCED_CONTROL;
+        init_params[2].type = MPV_RENDER_PARAM_ADVANCED_CONTROL;
         init_params[2].data = one.getPointer();
         init_params[2].write();
-        init_params[3].type = MpvLibrary.MPV_RENDER_PARAM_INVALID;
+        init_params[3].type = MPV_RENDER_PARAM_INVALID;
         init_params[3].data = null;
         init_params[3].write();
 
@@ -163,16 +169,16 @@ public class MPlayerClient {
 
         head_render_param = new mpv_render_param();
         mpv_render_param[] render_params = (mpv_render_param[]) head_render_param.toArray(4);
-        render_params[0].type = MpvLibrary.MPV_RENDER_PARAM_OPENGL_FBO;
+        render_params[0].type = MPV_RENDER_PARAM_OPENGL_FBO;
         render_params[0].data = fbo_settings.getPointer();
         render_params[0].write();
-        render_params[1].type = MpvLibrary.MPV_RENDER_PARAM_FLIP_Y;
+        render_params[1].type = MPV_RENDER_PARAM_FLIP_Y;
         render_params[1].data = one.getPointer();
         render_params[1].write();
-        render_params[2].type = MpvLibrary.MPV_RENDER_PARAM_BLOCK_FOR_TARGET_TIME;
+        render_params[2].type = MPV_RENDER_PARAM_BLOCK_FOR_TARGET_TIME;
         render_params[2].data = zero.getPointer();
         render_params[2].write();
-        render_params[3].type = MpvLibrary.MPV_RENDER_PARAM_INVALID;
+        render_params[3].type = MPV_RENDER_PARAM_INVALID;
         render_params[3].data = null;
         render_params[3].write();
     }
