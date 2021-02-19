@@ -72,8 +72,8 @@ public class VideoPlayer {
                 ));
                 PlayState state = new PlayState();
                 state.file = file;
-                state.paused = false;
-                state.time = -3;
+                state.paused = true;
+                state.time = 0;
                 display.dispatchState(state);
             }
         }

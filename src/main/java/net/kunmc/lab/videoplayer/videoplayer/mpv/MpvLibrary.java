@@ -53,8 +53,22 @@ public interface MpvLibrary extends StdCallLibrary {
         int MPV_RENDER_PARAM_OPENGL_INIT_PARAMS = 2;
         int MPV_RENDER_PARAM_OPENGL_FBO = 3;
         int MPV_RENDER_PARAM_FLIP_Y = 4;
+        int MPV_RENDER_PARAM_DEPTH = 5;
+        int MPV_RENDER_PARAM_ICC_PROFILE = 6;
+        int MPV_RENDER_PARAM_AMBIENT_LIGHT = 7;
+        int MPV_RENDER_PARAM_X11_DISPLAY = 8;
+        int MPV_RENDER_PARAM_WL_DISPLAY = 9;
         int MPV_RENDER_PARAM_ADVANCED_CONTROL = 10;
+        int MPV_RENDER_PARAM_NEXT_FRAME_INFO = 11;
         int MPV_RENDER_PARAM_BLOCK_FOR_TARGET_TIME = 12;
+        int MPV_RENDER_PARAM_SKIP_RENDERING = 13;
+        int MPV_RENDER_PARAM_DRM_DISPLAY = 14;
+        int MPV_RENDER_PARAM_DRM_DRAW_SURFACE_SIZE = 15;
+        int MPV_RENDER_PARAM_DRM_DISPLAY_V2 = 16;
+        int MPV_RENDER_PARAM_SW_SIZE = 17;
+        int MPV_RENDER_PARAM_SW_FORMAT = 18;
+        int MPV_RENDER_PARAM_SW_STRIDE = 19;
+        int MPV_RENDER_PARAM_SW_POINTER = 20;
     }
 
     interface mpv_render_update_flag {
@@ -62,8 +76,16 @@ public interface MpvLibrary extends StdCallLibrary {
     }
 
     interface mpv_format {
+        int MPV_FORMAT_NONE = 0;
+        int MPV_FORMAT_STRING = 1;
+        int MPV_FORMAT_OSD_STRING = 2;
+        int MPV_FORMAT_FLAG = 3;
         int MPV_FORMAT_INT64 = 4;
         int MPV_FORMAT_DOUBLE = 5;
+        int MPV_FORMAT_NODE = 6;
+        int MPV_FORMAT_NODE_ARRAY = 7;
+        int MPV_FORMAT_NODE_MAP = 8;
+        int MPV_FORMAT_BYTE_ARRAY = 9;
     }
 
     long mpv_client_api_version();
