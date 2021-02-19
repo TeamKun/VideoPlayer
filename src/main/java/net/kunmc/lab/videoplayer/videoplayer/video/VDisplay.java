@@ -8,17 +8,14 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.util.math.Vec3d;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
-
 public class VDisplay implements Display {
     private Quad quad;
     private VState state = VState.INVALIDATED;
     private VRequestedState requestedState = VRequestedState.VALIDATE;
     private VPlayerClient client;
     private final VPlayStateStore playStateStore = new VPlayStateStore();
+    private PlayState playStateQueue;
     private boolean destroyRequested;
-    private final Deque<String[]> commandQueue = new ArrayDeque<>();
 
     @Override
     public void setQuad(Quad quadIn) {
@@ -32,12 +29,14 @@ public class VDisplay implements Display {
 
     @Override
     public PlayState fetchState() {
+        if (playStateQueue != null)
+            return playStateQueue;
         return playStateStore.fetch();
     }
 
     @Override
     public void dispatchState(PlayState action) {
-        playStateStore.dispatch(this, action);
+        playStateQueue = action;
     }
 
     public void renderFrame() {
@@ -49,8 +48,10 @@ public class VDisplay implements Display {
     public void render(MatrixStack stack) {
         if (state != VState.VALIDATED)
             return;
-        if (quad != null)
+        if (quad != null) {
+            processPlayState();
             client.render(stack, quad);
+        }
     }
 
     public boolean canSee() {
@@ -83,12 +84,15 @@ public class VDisplay implements Display {
         return state == VState.INVALIDATED && destroyRequested;
     }
 
+    public void command(String... args) {
+        client.command(args);
+    }
+
     public boolean processRequest() {
         switch (requestedState) {
             case VALIDATE:
                 client = new VPlayerClient();
                 client.init();
-                processCommand();
                 state = VState.VALIDATED;
                 requestedState = VRequestedState.NONE;
                 break;
@@ -102,23 +106,10 @@ public class VDisplay implements Display {
         return isDestroyed();
     }
 
-    public void command(String... args) {
-        switch (state) {
-            case INVALIDATED:
-                commandQueue.add(args);
-                break;
-            case VALIDATED:
-                client.command(args);
-                break;
-            default:
-                throw new IllegalStateException("Invalid State");
-        }
-    }
-
-    private void processCommand() {
-        String[] command;
-        while ((command = commandQueue.poll()) != null) {
-            client.command(command);
+    private void processPlayState() {
+        if (playStateQueue != null) {
+            playStateStore.dispatch(this, playStateQueue);
+            playStateQueue = null;
         }
     }
 

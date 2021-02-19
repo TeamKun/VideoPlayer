@@ -7,13 +7,16 @@ import com.sun.jna.ptr.PointerByReference;
 import net.kunmc.lab.videoplayer.videoplayer.video.VEventHandler;
 import org.apache.commons.lang3.ArrayUtils;
 
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static net.kunmc.lab.videoplayer.videoplayer.mpv.MPlayer.get_proc_address;
 import static net.kunmc.lab.videoplayer.videoplayer.mpv.MPlayer.*;
 import static net.kunmc.lab.videoplayer.videoplayer.mpv.MpvLibrary.*;
-import static net.kunmc.lab.videoplayer.videoplayer.mpv.MpvLibrary.mpv_event_id.MPV_EVENT_GET_PROPERTY_REPLY;
-import static net.kunmc.lab.videoplayer.videoplayer.mpv.MpvLibrary.mpv_event_id.MPV_EVENT_VIDEO_RECONFIG;
+import static net.kunmc.lab.videoplayer.videoplayer.mpv.MpvLibrary.mpv_event_id.*;
 import static net.kunmc.lab.videoplayer.videoplayer.mpv.MpvLibrary.mpv_format.MPV_FORMAT_DOUBLE;
 import static net.kunmc.lab.videoplayer.videoplayer.mpv.MpvLibrary.mpv_format.MPV_FORMAT_INT64;
 import static net.kunmc.lab.videoplayer.videoplayer.mpv.MpvLibrary.mpv_render_param_type.*;
@@ -26,9 +29,7 @@ public class MPlayerClient {
     private mpv_render_param head_render_param;
     private PointerByReference mpv_gl;
     private final DoubleByReference volumeRef = new DoubleByReference();
-
-    private long dwidth;
-    private long dheight;
+    private final MGetEventDispatcher dispatcherGet = new MGetEventDispatcher();
 
     private boolean redraw = false;
     public final on_render_update on_mpv_redraw = d -> {
@@ -82,30 +83,57 @@ public class MPlayerClient {
         }
     }
 
+    private static class MEventDispatcher<T> {
+        private AtomicLong lastId = new AtomicLong();
+        private Map<Long, CompletableFuture<T>> futures = new ConcurrentHashMap<>();
+
+        protected long generateId() {
+            return lastId.getAndIncrement();
+        }
+
+        protected CompletableFuture<T> onRequest(long id) {
+            CompletableFuture<T> future = new CompletableFuture<>();
+            futures.put(id, future);
+            return future;
+        }
+
+        public void onReply(long id, T data) {
+            CompletableFuture<T> future = futures.remove(id);
+            if (future != null)
+                future.complete(data);
+        }
+    }
+
+    private class MGetEventDispatcher extends MEventDispatcher<Pointer> {
+        public CompletableFuture<Pointer> getPropertyAsync(String name, int format) {
+            long id = generateId();
+            mpv.mpv_get_property_async(handle, id, name, format);
+            return onRequest(id);
+        }
+    }
+
     public void processEvent(VEventHandler handler) {
         mpv_event event = mpv.mpv_wait_event(handle, 0);
         switch (event.event_id) {
+            case MPV_EVENT_FILE_LOADED: {
+            }
+            break;
+
             case MPV_EVENT_VIDEO_RECONFIG: {
-                mpv.mpv_get_property_async(handle, 0, "dwidth", MPV_FORMAT_INT64);
-                mpv.mpv_get_property_async(handle, 1, "dheight", MPV_FORMAT_INT64);
+                dispatcherGet.getPropertyAsync("dwidth", MPV_FORMAT_INT64)
+                        .thenAcceptBoth(dispatcherGet.getPropertyAsync("dheight", MPV_FORMAT_INT64), (widthPtr, heightPtr) -> {
+                            long width = widthPtr.getLong(0);
+                            long height = heightPtr.getLong(0);
+                            if (width > 0 && height > 0)
+                                handler.onResize((int) width, (int) height);
+                        });
             }
             break;
 
             case MPV_EVENT_GET_PROPERTY_REPLY: {
                 mpv_event_property prop = new mpv_event_property(event.data);
                 prop.read();
-                long data = prop.data.getLong(0);
-                switch ((int) event.reply_userdata) {
-                    case 0:
-                        dwidth = data;
-                        break;
-                    case 1:
-                        dheight = data;
-                        break;
-                }
-
-                if (dwidth > 0 && dheight > 0)
-                    handler.onResize((int) dwidth, (int) dheight);
+                dispatcherGet.onReply(event.reply_userdata, prop.data);
             }
             break;
 
