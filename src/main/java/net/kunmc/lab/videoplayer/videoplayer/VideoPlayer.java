@@ -104,6 +104,9 @@ public class VideoPlayer {
                         e.dispatchState(state);
                     });
                     break;
+                case "x":
+                    manager.clear();
+                    break;
             }
         }
     }

@@ -42,7 +42,7 @@ minecraft {
             property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
 
             // Recommended logging level for the console
-            property 'forge.logging.console.level', 'debug'
+            //property 'forge.logging.console.level', 'debug'
 
             mods {
                 videoplayer {
@@ -58,7 +58,7 @@ minecraft {
             property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
 
             // Recommended logging level for the console
-            property 'forge.logging.console.level', 'debug'
+            //property 'forge.logging.console.level', 'debug'
 
             mods {
                 videoplayer {
@@ -74,7 +74,7 @@ minecraft {
             property 'forge.logging.markers', 'SCAN,REGISTRIES,REGISTRYDUMP'
 
             // Recommended logging level for the console
-            property 'forge.logging.console.level', 'debug'
+            //property 'forge.logging.console.level', 'debug'
 
             // Specify the modid for data generation, where to output the resulting resource, and where to look for existing resources.
             args '--mod', 'videoplayer', '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
