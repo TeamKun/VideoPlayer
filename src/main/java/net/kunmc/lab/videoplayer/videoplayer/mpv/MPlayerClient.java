@@ -21,7 +21,7 @@ import static net.kunmc.lab.videoplayer.videoplayer.mpv.MpvLibrary.mpv_format.MP
 import static net.kunmc.lab.videoplayer.videoplayer.mpv.MpvLibrary.mpv_format.MPV_FORMAT_INT64;
 import static net.kunmc.lab.videoplayer.videoplayer.mpv.MpvLibrary.mpv_render_param_type.*;
 import static net.kunmc.lab.videoplayer.videoplayer.mpv.MpvLibrary.mpv_render_update_flag.MPV_RENDER_UPDATE_FRAME;
-import static org.lwjgl.opengl.GL11.GL_RGB8;
+import static org.lwjgl.opengl.GL11.GL_RGBA8;
 
 public class MPlayerClient {
     private long handle;
@@ -77,7 +77,9 @@ public class MPlayerClient {
 
             int flags = mpv.mpv_render_context_update(mpv_gl.getValue());
             if ((flags & MPV_RENDER_UPDATE_FRAME) != 0) {
+                // glDebugMessageInsert(GL_DEBUG_SOURCE_APPLICATION, GL_DEBUG_TYPE_MARKER, 114514, GL_DEBUG_SEVERITY_HIGH, "MPV Render Start");
                 mpv.mpv_render_context_render(mpv_gl.getValue(), head_render_param);
+                // glDebugMessageInsert(GL_DEBUG_SOURCE_APPLICATION, GL_DEBUG_TYPE_MARKER, 1919810, GL_DEBUG_SEVERITY_HIGH, "MPV Render End");
                 mpv.mpv_set_property_async(handle, 0, "volume", MPV_FORMAT_DOUBLE, volumeRef.getPointer());
             }
         }
@@ -192,7 +194,7 @@ public class MPlayerClient {
         fbo_settings.fbo = 0;
         fbo_settings.w = 0;
         fbo_settings.h = 0;
-        fbo_settings.internal_format = GL_RGB8;
+        fbo_settings.internal_format = GL_RGBA8;
         fbo_settings.write();
 
         head_render_param = new mpv_render_param();
