@@ -21,6 +21,14 @@ public class VDisplayManager implements DisplayManagaer {
     }
 
     @Override
+    public VDisplay computeIfAbsent(UUID uuid) {
+        VDisplay display = get(uuid);
+        if (display == null)
+            display = create(uuid);
+        return display;
+    }
+
+    @Override
     public VDisplay get(UUID uuid) {
         return displayMap.get(uuid);
     }

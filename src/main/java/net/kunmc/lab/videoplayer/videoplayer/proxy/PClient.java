@@ -4,6 +4,9 @@ import com.mojang.blaze3d.matrix.MatrixStack;
 import net.kunmc.lab.videoplayer.videoplayer.model.PlayState;
 import net.kunmc.lab.videoplayer.videoplayer.model.Quad;
 import net.kunmc.lab.videoplayer.videoplayer.mpv.MPlayer;
+import net.kunmc.lab.videoplayer.videoplayer.patch.VideoPatch;
+import net.kunmc.lab.videoplayer.videoplayer.patch.VideoPatchEvent;
+import net.kunmc.lab.videoplayer.videoplayer.patch.VideoPatchOperation;
 import net.kunmc.lab.videoplayer.videoplayer.util.Timer;
 import net.kunmc.lab.videoplayer.videoplayer.video.VDisplay;
 import net.kunmc.lab.videoplayer.videoplayer.video.VDisplayManager;
@@ -18,6 +21,7 @@ import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.List;
 import java.util.UUID;
 
 public class PClient implements PCommon {
@@ -42,6 +46,33 @@ public class PClient implements PCommon {
         Timer.tick();
         MatrixStack stack = event.getMatrixStack();
         manager.render(stack);
+    }
+
+    @SubscribeEvent
+    public void onPatch(VideoPatchEvent event) {
+        VideoPatchOperation op = event.getOperation();
+        List<VideoPatch> patches = event.getPatches();
+
+        switch (op) {
+            case SYNC:
+                manager.clear();
+                patches.forEach(p -> {
+                    VDisplay display = manager.create(p.getId());
+                    display.setQuad(p.getQuad());
+                    display.dispatchState(p.getState());
+                });
+                break;
+            case UPDATE:
+                patches.forEach(p -> {
+                    VDisplay display = manager.computeIfAbsent(p.getId());
+                    display.setQuad(p.getQuad());
+                    display.dispatchState(p.getState());
+                });
+                break;
+            case DELETE:
+                patches.forEach(p -> manager.destroy(p.getId()));
+                break;
+        }
     }
 
     @SubscribeEvent
