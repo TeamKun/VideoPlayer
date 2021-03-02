@@ -46,12 +46,13 @@ public class PCommon {
 
                                     CommandSource player = ctx.getSource();
                                     Vec3d pos = player.getPos();
+                                    DimensionType dimension = Optional.ofNullable(player.getEntity())
+                                            .map(e -> e.dimension)
+                                            .orElse(DimensionType.OVERWORLD);
 
                                     UUID id = UUID.randomUUID();
                                     Quad quad = new Quad(
-                                            Optional.ofNullable(player.getEntity())
-                                                    .map(Entity::dimension)
-                                                    .orElse(DimensionType.OVERWORLD),
+                                            dimension,
                                             pos.add(0, 9, 0),
                                             pos.add(16, 9, 0),
                                             pos.add(16, 0, 0),
