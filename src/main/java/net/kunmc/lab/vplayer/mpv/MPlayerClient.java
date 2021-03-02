@@ -53,7 +53,7 @@ public class MPlayerClient {
         return MPlayer.getStatus(MPlayer.mpv, MPlayer.mpv.mpv_command_async(handle, 0, ArrayUtils.add(args, null)));
     }
 
-    public void render() {
+    public void renderFrame() {
         renderMpv();
 
         MPlayer.mpv.mpv_render_context_report_swap(mpv_gl.getValue());

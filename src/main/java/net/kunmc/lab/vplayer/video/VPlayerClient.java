@@ -27,7 +27,7 @@ public class VPlayerClient implements VEventHandler {
     }
 
     public void renderFrame() {
-        playerClient.render();
+        playerClient.renderFrame();
     }
 
     public void render(MatrixStack stack, Quad quad) {

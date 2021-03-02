@@ -51,28 +51,30 @@ public class VDisplayManager implements DisplayManagaer {
 
     public void render(MatrixStack stack) {
         {
-            VDisplay add;
-            while ((add = addQueue.poll()) != null) {
-                add.processRequest();
-                displays.add(add);
-            }
-        }
-
-        {
             VRenderer.beginRenderFrame();
+
+            displays.forEach(display -> {
+                if (display.canSee())
+                    display.validate();
+                else
+                    display.invalidate();
+            });
+
+            displays.removeIf(VDisplay::processRequest);
+            
+            {
+                VDisplay add;
+                while ((add = addQueue.poll()) != null) {
+                    add.processRequest();
+                    displays.add(add);
+                }
+            }
+
             displays.forEach(VDisplay::renderFrame);
+
             VRenderer.endRenderFrame();
         }
 
         displays.forEach(display -> display.render(stack));
-
-        displays.forEach(display -> {
-            if (display.canSee())
-                display.validate();
-            else
-                display.invalidate();
-        });
-
-        displays.removeIf(VDisplay::processRequest);
     }
 }

@@ -70,7 +70,7 @@ public class VRenderer {
 
     public void initFbo(int _width, int _height) {
         framebuffer = new Framebuffer(_width, _height, true, IS_RUNNING_ON_MAC);
-        framebuffer.setFramebufferColor(0.0F, 1.0F, 0.0F, 1.0F);
+        framebuffer.setFramebufferColor(0.0F, 0.0F, 0.0F, 1.0F);
     }
 
     public void updateFbo(int _width, int _height) {
