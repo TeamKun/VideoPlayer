@@ -17,7 +17,7 @@ apply plugin: 'net.minecraftforge.gradle'
 
 group = 'net.kunmc.lab'
 version = '1.0-SNAPSHOT'
-archivesBaseName = 'videoplayer'
+archivesBaseName = 'vplayer'
 
 sourceCompatibility = targetCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = '1.8'
 
@@ -45,7 +45,7 @@ minecraft {
             //property 'forge.logging.console.level', 'debug'
 
             mods {
-                videoplayer {
+                vplayer {
                     source sourceSets.main
                 }
             }
@@ -61,7 +61,7 @@ minecraft {
             //property 'forge.logging.console.level', 'debug'
 
             mods {
-                videoplayer {
+                vplayer {
                     source sourceSets.main
                 }
             }
@@ -77,10 +77,10 @@ minecraft {
             //property 'forge.logging.console.level', 'debug'
 
             // Specify the modid for data generation, where to output the resulting resource, and where to look for existing resources.
-            args '--mod', 'videoplayer', '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
+            args '--mod', 'vplayer', '--all', '--output', file('src/generated/resources/'), '--existing', file('src/main/resources/')
 
             mods {
-                videoplayer {
+                vplayer {
                     source sourceSets.main
                 }
             }
@@ -132,7 +132,7 @@ dependencies {
 jar {
     manifest {
         attributes([
-                "Specification-Title"     : "videoplayer",
+                "Specification-Title"     : "vplayer",
                 "Specification-Vendor"    : "Kamesuta",
                 "Specification-Version"   : "1", // We are version 1 of ourselves
                 "Implementation-Title"    : project.name,
@@ -156,7 +156,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ConfigureShadowRelocatio
 
 task relocateShadowJar(type: ConfigureShadowRelocation) {
     target = tasks.shadowJar
-    prefix = "net.kunmc.lab.videoplayer.lib" // Default value is "shadow"
+    prefix = "net.kunmc.lab.vplayer.lib" // Default value is "shadow"
 }
 
 tasks.shadowJar.dependsOn tasks.relocateShadowJar
