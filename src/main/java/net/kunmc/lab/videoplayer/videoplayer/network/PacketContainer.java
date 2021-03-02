@@ -1,11 +1,13 @@
 package net.kunmc.lab.videoplayer.videoplayer.network;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import net.kunmc.lab.videoplayer.videoplayer.VideoPlayer;
 import net.kunmc.lab.videoplayer.videoplayer.patch.VideoPatch;
 import net.kunmc.lab.videoplayer.videoplayer.patch.VideoPatchEvent;
 import net.kunmc.lab.videoplayer.videoplayer.patch.VideoPatchOperation;
 import net.minecraft.network.PacketBuffer;
+import net.minecraft.world.dimension.DimensionType;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.network.NetworkEvent;
 import org.apache.commons.lang3.StringUtils;
@@ -16,7 +18,9 @@ import java.util.function.Supplier;
 
 public class PacketContainer {
 
-    private static final Gson gson = new Gson();
+    private static final Gson gson = new GsonBuilder()
+            .registerTypeAdapter(DimensionType.class, new DimensionTypeAdaptor())
+            .create();
 
     private final VideoPatchOperation operation;
     private final List<VideoPatch> patches;
@@ -32,11 +36,7 @@ public class PacketContainer {
 
     public static PacketContainer decode(PacketBuffer buffer) {
         try {
-            byte[] bytes = new byte[buffer.readableBytes()];
-            buffer.getBytes(0, bytes);
-            String messageString = StringUtils.toEncodedString(bytes, StandardCharsets.UTF_8);
-
-            return gson.fromJson(messageString, PacketContainer.class);
+            return gson.fromJson(buffer.readString(), PacketContainer.class);
         } catch (Exception e) {
             VideoPlayer.LOGGER.warn("Invalid Packet", e);
             return null;

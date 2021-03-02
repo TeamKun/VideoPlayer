@@ -15,29 +15,19 @@ import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.client.event.ClientChatEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
-import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 import java.util.UUID;
 
-public class PClient implements PCommon {
+public class PClient extends PCommon {
 
     private final VDisplayManager manager = new VDisplayManager();
 
-    @Override
-    public void registerEvents() {
-        // Register the doClientStuff method for modloading
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::doClientStuff);
-
-        // Register ourselves for server and other game events we are interested in
-        MinecraftForge.EVENT_BUS.register(this);
-    }
-
-    private void doClientStuff(final FMLClientSetupEvent ev) {
+    @SubscribeEvent
+    public void doClientStuff(final FMLClientSetupEvent ev) {
         MPlayer.init();
     }
 
