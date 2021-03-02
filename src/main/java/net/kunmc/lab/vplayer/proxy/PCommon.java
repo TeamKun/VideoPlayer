@@ -10,7 +10,9 @@ import net.kunmc.lab.vplayer.patch.VideoPatch;
 import net.kunmc.lab.vplayer.patch.VideoPatchOperation;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
+import net.minecraft.entity.Entity;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.dimension.DimensionType;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
@@ -18,6 +20,7 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
 import java.util.Collections;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.UUID;
 
 public class PCommon {
@@ -46,7 +49,9 @@ public class PCommon {
 
                                     UUID id = UUID.randomUUID();
                                     Quad quad = new Quad(
-                                            player.getEntity().dimension,
+                                            Optional.ofNullable(player.getEntity())
+                                                    .map(Entity::dimension)
+                                                    .orElse(DimensionType.OVERWORLD),
                                             pos.add(0, 9, 0),
                                             pos.add(16, 9, 0),
                                             pos.add(16, 0, 0),
