@@ -8,39 +8,39 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class VDisplayManager implements DisplayManagaer {
-    private final Map<UUID, VDisplay> displayMap = new ConcurrentHashMap<>();
-    private final Deque<VDisplay> addQueue = new ArrayDeque<>();
-    private final List<VDisplay> displays = new ArrayList<>();
+    private final Map<UUID, VDisplayClient> displayMap = new ConcurrentHashMap<>();
+    private final Deque<VDisplayClient> addQueue = new ArrayDeque<>();
+    private final List<VDisplayClient> displays = new ArrayList<>();
 
     @Override
-    public VDisplay create(UUID uuid) {
-        VDisplay display = new VDisplay();
+    public VDisplayClient create(UUID uuid) {
+        VDisplayClient display = new VDisplayClient();
         Optional.ofNullable(displayMap.put(uuid, display)).ifPresent(VDisplay::destroy);
         addQueue.add(display);
         return display;
     }
 
     @Override
-    public VDisplay computeIfAbsent(UUID uuid) {
-        VDisplay display = get(uuid);
+    public VDisplayClient computeIfAbsent(UUID uuid) {
+        VDisplayClient display = get(uuid);
         if (display == null)
             display = create(uuid);
         return display;
     }
 
     @Override
-    public VDisplay get(UUID uuid) {
+    public VDisplayClient get(UUID uuid) {
         return displayMap.get(uuid);
     }
 
     @Override
     public void destroy(UUID uuid) {
-        Optional.ofNullable(displayMap.remove(uuid)).ifPresent(VDisplay::destroy);
+        Optional.ofNullable(displayMap.remove(uuid)).ifPresent(VDisplayClient::destroy);
     }
 
     @Override
     public void clear() {
-        displays.forEach(VDisplay::destroy);
+        displays.forEach(VDisplayClient::destroy);
         displayMap.clear();
     }
 
@@ -61,14 +61,14 @@ public class VDisplayManager implements DisplayManagaer {
             });
 
             {
-                VDisplay add;
+                VDisplayClient add;
                 while ((add = addQueue.poll()) != null)
                     displays.add(add);
             }
 
-            displays.removeIf(VDisplay::processRequest);
+            displays.removeIf(VDisplayClient::processRequest);
 
-            displays.forEach(VDisplay::renderFrame);
+            displays.forEach(VDisplayClient::renderFrame);
 
             VRenderer.endRenderFrame();
         }

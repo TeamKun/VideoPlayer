@@ -25,7 +25,7 @@ public class VPlayStateStore {
         timer.setPaused(paused);
     }
 
-    public void dispatch(VDisplay display, PlayState action) {
+    public void dispatch(VDisplayClient display, PlayState action) {
         if (!Objects.equals(file, action.file)) {
             file = action.file;
             display.command("loadfile", action.file);
