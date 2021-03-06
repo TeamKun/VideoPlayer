@@ -60,15 +60,13 @@ public class VDisplayManager implements DisplayManagaer {
                     display.invalidate();
             });
 
-            displays.removeIf(VDisplay::processRequest);
-            
             {
                 VDisplay add;
-                while ((add = addQueue.poll()) != null) {
-                    add.processRequest();
+                while ((add = addQueue.poll()) != null)
                     displays.add(add);
-                }
             }
+
+            displays.removeIf(VDisplay::processRequest);
 
             displays.forEach(VDisplay::renderFrame);
 

@@ -18,6 +18,7 @@ public class VPlayerClient implements VEventHandler {
     public void init() {
         playerClient.init();
         renderer.initFbo(480, 480);
+        renderer.initFrame();
         playerClient.initFbo(renderer.getFramebuffer().framebufferObject);
         playerClient.updateFbo(480, 480);
     }
@@ -27,12 +28,13 @@ public class VPlayerClient implements VEventHandler {
     }
 
     public void renderFrame() {
+        renderer.initFrame();
         playerClient.renderFrame();
+        playerClient.processEvent(this);
     }
 
     public void render(MatrixStack stack, Quad quad) {
         playerClient.setVolume(renderer.getVolume(quad));
-        playerClient.processEvent(this);
         renderer.render(stack, quad);
     }
 
@@ -40,6 +42,7 @@ public class VPlayerClient implements VEventHandler {
     public void onResize(int width, int height) {
         playerClient.updateFbo(width, height);
         renderer.updateFbo(width, height);
+        renderer.initFrame();
     }
 
     public void destroy() {
