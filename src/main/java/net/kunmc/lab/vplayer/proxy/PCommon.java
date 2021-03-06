@@ -40,6 +40,7 @@ public class PCommon {
     public void onServerStart(FMLServerStartingEvent event) {
         event.getCommandDispatcher().register(
                 Commands.literal("vplayer")
+                        .then(Commands.literal("create"))
                         .then(Commands.argument("file", StringArgumentType.string())
                                 .executes(ctx -> {
                                     String file = StringArgumentType.getString(ctx, "file");

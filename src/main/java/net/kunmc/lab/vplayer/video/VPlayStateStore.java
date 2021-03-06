@@ -18,6 +18,13 @@ public class VPlayStateStore {
         return state;
     }
 
+    public void dispatch(PlayState action) {
+        file = action.file;
+        timer.set(action.time);
+        paused = action.paused;
+        timer.setPaused(paused);
+    }
+
     public void dispatch(VDisplay display, PlayState action) {
         if (!Objects.equals(file, action.file)) {
             file = action.file;
