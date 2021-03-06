@@ -42,6 +42,8 @@ public class VDisplayClient extends VDisplay {
     public boolean canSee() {
         if (destroyRequested)
             return false;
+        if (quad == null)
+            return false;
         ActiveRenderInfo activeRenderInfo = Minecraft.getInstance().gameRenderer.getActiveRenderInfo();
         Vec3d view = activeRenderInfo.getProjectedView();
         double distance = quad.getNearestDistance(view);

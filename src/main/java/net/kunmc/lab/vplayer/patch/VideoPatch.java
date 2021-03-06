@@ -3,14 +3,17 @@ package net.kunmc.lab.vplayer.patch;
 import net.kunmc.lab.vplayer.model.PlayState;
 import net.kunmc.lab.vplayer.model.Quad;
 
+import javax.annotation.Nullable;
 import java.util.UUID;
 
 public class VideoPatch {
     private final UUID id;
+    @Nullable
     private final Quad quad;
+    @Nullable
     private final PlayState state;
 
-    public VideoPatch(UUID id, Quad quad, PlayState state) {
+    public VideoPatch(UUID id, @Nullable Quad quad, @Nullable PlayState state) {
         this.id = id;
         this.quad = quad;
         this.state = state;
@@ -20,10 +23,12 @@ public class VideoPatch {
         return id;
     }
 
+    @Nullable
     public Quad getQuad() {
         return quad;
     }
 
+    @Nullable
     public PlayState getState() {
         return state;
     }

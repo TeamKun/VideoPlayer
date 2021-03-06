@@ -1,8 +1,11 @@
 package net.kunmc.lab.vplayer.model;
 
-public interface Display {
-    void setQuad(Quad quadIn);
+import javax.annotation.Nullable;
 
+public interface Display {
+    void setQuad(@Nullable Quad quadIn);
+    
+    @Nullable
     Quad getQuad();
 
     PlayState fetchState();

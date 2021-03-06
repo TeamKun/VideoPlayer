@@ -14,12 +14,14 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.client.event.ClientChatEvent;
+import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public class PClient extends PCommon {
@@ -39,7 +41,12 @@ public class PClient extends PCommon {
     }
 
     @SubscribeEvent
-    public void onPatch(VideoPatchEvent event) {
+    public void onDisconnect(ClientPlayerNetworkEvent.LoggedOutEvent event) {
+        manager.clear();
+    }
+
+    @SubscribeEvent
+    public void onClientPatch(VideoPatchEvent.Client event) {
         VideoPatchOperation op = event.getOperation();
         List<VideoPatch> patches = event.getPatches();
 
@@ -49,14 +56,14 @@ public class PClient extends PCommon {
                 patches.forEach(p -> {
                     VDisplay display = manager.create(p.getId());
                     display.setQuad(p.getQuad());
-                    display.dispatchState(p.getState());
+                    Optional.ofNullable(p.getState()).ifPresent(display::dispatchState);
                 });
                 break;
             case UPDATE:
                 patches.forEach(p -> {
                     VDisplay display = manager.computeIfAbsent(p.getId());
                     display.setQuad(p.getQuad());
-                    display.dispatchState(p.getState());
+                    Optional.ofNullable(p.getState()).ifPresent(display::dispatchState);
                 });
                 break;
             case DELETE:

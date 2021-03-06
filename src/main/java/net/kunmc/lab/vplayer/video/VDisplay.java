@@ -4,17 +4,21 @@ import net.kunmc.lab.vplayer.model.Display;
 import net.kunmc.lab.vplayer.model.PlayState;
 import net.kunmc.lab.vplayer.model.Quad;
 
+import javax.annotation.Nullable;
+
 public class VDisplay implements Display {
     protected final VPlayStateStore playStateStore = new VPlayStateStore();
+    @Nullable
     protected Quad quad;
     protected VState state = VState.INVALIDATED;
     protected boolean destroyRequested;
 
     @Override
-    public void setQuad(Quad quadIn) {
+    public void setQuad(@Nullable Quad quadIn) {
         quad = quadIn;
     }
 
+    @Nullable
     @Override
     public Quad getQuad() {
         return quad;
