@@ -141,6 +141,8 @@ public class VRenderer {
                 bufferbuilder.finishDrawing();
                 WorldVertexBufferUploader.draw(bufferbuilder);
             }
+
+            RenderSystem.disableBlend();
         }
 
         framebuffer.unbindFramebuffer();
