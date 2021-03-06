@@ -7,6 +7,7 @@ import net.kunmc.lab.vplayer.model.Quad;
 import net.minecraft.client.GameSettings;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.*;
+import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.shader.Framebuffer;
 import net.minecraft.util.ResourceLocation;
@@ -93,48 +94,53 @@ public class VRenderer {
         RenderSystem.disableBlend();
 
         {
-            Minecraft.getInstance().getTextureManager().bindTexture(gradientTexture);
-
-            Tessellator tessellator = Tessellator.getInstance();
-            BufferBuilder bufferbuilder = tessellator.getBuffer();
-            bufferbuilder.begin(GL_QUADS, DefaultVertexFormats.POSITION_TEX);
-
-            float f = (System.currentTimeMillis() % 1000) / 1000f;
-
-            bufferbuilder.pos(-1, 1, 0).tex(f + 0, 0).endVertex();
-            bufferbuilder.pos(-1, -1, 0).tex(f + 0, 1).endVertex();
-            bufferbuilder.pos(1, -1, 0).tex(f + 1, 1).endVertex();
-            bufferbuilder.pos(1, 1, 0).tex(f + 1, 0).endVertex();
-
-            bufferbuilder.finishDrawing();
-            WorldVertexBufferUploader.draw(bufferbuilder);
-        }
-
-        RenderSystem.enableBlend();
-        RenderSystem.blendFunc(GL_ZERO, GL_SRC_COLOR);
-
-        {
-            Minecraft.getInstance().getTextureManager().bindTexture(loadingTexture);
-
-            Tessellator tessellator = Tessellator.getInstance();
-            BufferBuilder bufferbuilder = tessellator.getBuffer();
-            bufferbuilder.begin(GL_QUADS, DefaultVertexFormats.POSITION_TEX);
-
             float w = framebuffer.framebufferWidth;
             float h = framebuffer.framebufferHeight;
+            float margin = .5f;
+
             float m = Math.min(w, h);
-            float nw0 = (m / w - 1);
-            float nw1 = (m / w - 1) + w / m;
-            float nh0 = (m / h - 1);
-            float nh1 = (m / h - 1) + h / m;
+            float fw = w / m * margin;
+            float fh = h / m * margin;
+            float nw0 = (m / w - 1) - fw;
+            float nw1 = (m / w - 1) + fw + w / m;
+            float nh0 = (m / h - 1) - fh;
+            float nh1 = (m / h - 1) + fh + h / m;
 
-            bufferbuilder.pos(-1, 1, 0).tex(nw0, nh0).endVertex();
-            bufferbuilder.pos(-1, -1, 0).tex(nw0, nh1).endVertex();
-            bufferbuilder.pos(1, -1, 0).tex(nw1, nh1).endVertex();
-            bufferbuilder.pos(1, 1, 0).tex(nw1, nh0).endVertex();
+            TextureManager manager = Minecraft.getInstance().getTextureManager();
+            Tessellator tessellator = Tessellator.getInstance();
+            BufferBuilder bufferbuilder = tessellator.getBuffer();
 
-            bufferbuilder.finishDrawing();
-            WorldVertexBufferUploader.draw(bufferbuilder);
+            {
+                manager.bindTexture(gradientTexture);
+                bufferbuilder.begin(GL_QUADS, DefaultVertexFormats.POSITION_TEX);
+
+                float f = (System.currentTimeMillis() % 3000) / 3000f;
+                float s = .1f;
+
+                bufferbuilder.pos(-1, 1, 0).tex(nw0 * s - f, nh0).endVertex();
+                bufferbuilder.pos(-1, -1, 0).tex(nw0 * s - f, nh1).endVertex();
+                bufferbuilder.pos(1, -1, 0).tex(nw1 * s - f, nh1).endVertex();
+                bufferbuilder.pos(1, 1, 0).tex(nw1 * s - f, nh0).endVertex();
+
+                bufferbuilder.finishDrawing();
+                WorldVertexBufferUploader.draw(bufferbuilder);
+            }
+
+            RenderSystem.enableBlend();
+            RenderSystem.blendFunc(GL_ZERO, GL_SRC_COLOR);
+
+            {
+                manager.bindTexture(loadingTexture);
+                bufferbuilder.begin(GL_QUADS, DefaultVertexFormats.POSITION_TEX);
+
+                bufferbuilder.pos(-1, 1, 0).tex(nw0, nh0).endVertex();
+                bufferbuilder.pos(-1, -1, 0).tex(nw0, nh1).endVertex();
+                bufferbuilder.pos(1, -1, 0).tex(nw1, nh1).endVertex();
+                bufferbuilder.pos(1, 1, 0).tex(nw1, nh0).endVertex();
+
+                bufferbuilder.finishDrawing();
+                WorldVertexBufferUploader.draw(bufferbuilder);
+            }
         }
 
         framebuffer.unbindFramebuffer();
