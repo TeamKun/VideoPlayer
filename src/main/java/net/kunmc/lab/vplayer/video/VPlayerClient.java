@@ -17,10 +17,10 @@ public class VPlayerClient implements VEventHandler {
 
     public void init() {
         playerClient.init();
-        renderer.initFbo(480, 480);
+        renderer.initFbo(1920, 1080);
         renderer.initFrame();
         playerClient.initFbo(renderer.getFramebuffer().framebufferObject);
-        playerClient.updateFbo(480, 480);
+        playerClient.updateFbo(1920, 1080);
     }
 
     public Optional<String> command(String[] args) {

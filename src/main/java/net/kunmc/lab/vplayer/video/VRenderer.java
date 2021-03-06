@@ -120,10 +120,18 @@ public class VRenderer {
             BufferBuilder bufferbuilder = tessellator.getBuffer();
             bufferbuilder.begin(GL_QUADS, DefaultVertexFormats.POSITION_TEX);
 
-            bufferbuilder.pos(-1, 1, 0).tex(0, 0).endVertex();
-            bufferbuilder.pos(-1, -1, 0).tex(0, 1).endVertex();
-            bufferbuilder.pos(1, -1, 0).tex(1, 1).endVertex();
-            bufferbuilder.pos(1, 1, 0).tex(1, 0).endVertex();
+            float w = framebuffer.framebufferWidth;
+            float h = framebuffer.framebufferHeight;
+            float m = Math.min(w, h);
+            float nw0 = (m / w - 1);
+            float nw1 = (m / w - 1) + w / m;
+            float nh0 = (m / h - 1);
+            float nh1 = (m / h - 1) + h / m;
+
+            bufferbuilder.pos(-1, 1, 0).tex(nw0, nh0).endVertex();
+            bufferbuilder.pos(-1, -1, 0).tex(nw0, nh1).endVertex();
+            bufferbuilder.pos(1, -1, 0).tex(nw1, nh1).endVertex();
+            bufferbuilder.pos(1, 1, 0).tex(nw1, nh0).endVertex();
 
             bufferbuilder.finishDrawing();
             WorldVertexBufferUploader.draw(bufferbuilder);
