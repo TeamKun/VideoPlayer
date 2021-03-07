@@ -3,10 +3,12 @@ package net.kunmc.lab.vplayer.mpv;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import com.sun.jna.Structure;
+import com.sun.jna.Union;
 import com.sun.jna.ptr.PointerByReference;
 import com.sun.jna.win32.StdCallLibrary;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public interface MpvLibrary extends StdCallLibrary {
@@ -169,6 +171,63 @@ public interface MpvLibrary extends StdCallLibrary {
         @Override
         protected List<String> getFieldOrder() {
             return Arrays.asList("name", "format", "data");
+        }
+    }
+
+    class mpv_node extends Structure {
+        u u;
+        mpv_format format;
+
+        @Override
+        protected List<String> getFieldOrder() {
+            return Arrays.asList("u", "format");
+        }
+
+        public static class u extends Union {
+            String string;
+            int flag;
+            long int64;
+            double double_;
+            Pointer list;
+            Pointer ba;
+        }
+    }
+
+    class mpv_node_list extends Structure {
+        int num;
+        mpv_node[] values;
+        @Deprecated
+        Pointer keys;
+
+        @Override
+        protected List<String> getFieldOrder() {
+            return Arrays.asList("num", "values", "keys");
+        }
+    }
+
+    class mpv_byte_array extends Structure {
+        Pointer data;
+        long size;
+
+        @Override
+        protected List<String> getFieldOrder() {
+            return Arrays.asList("data", "size");
+        }
+    }
+
+    class mpv_event_command extends Structure {
+        public mpv_event_command() {
+        }
+
+        public mpv_event_command(Pointer pointer) {
+            super(pointer);
+        }
+
+        mpv_node result;
+
+        @Override
+        protected List<String> getFieldOrder() {
+            return Collections.singletonList("result");
         }
     }
 

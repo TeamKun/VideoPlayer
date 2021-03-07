@@ -67,8 +67,8 @@ public class VDisplayClient extends VDisplay {
         destroyRequested = true;
     }
 
-    public void command(String... args) {
-        client.command(args);
+    public VDisplayController getController() {
+        return client.getController();
     }
 
     public boolean processRequest() {
@@ -78,6 +78,7 @@ public class VDisplayClient extends VDisplay {
                 client.init();
                 state = VState.VALIDATED;
                 requestedState = VRequestedState.NONE;
+                playStateStore.reapply(this);
                 break;
             case INVALIDATE:
                 client.destroy();

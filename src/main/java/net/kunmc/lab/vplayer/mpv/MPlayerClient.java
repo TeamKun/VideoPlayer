@@ -2,20 +2,11 @@ package net.kunmc.lab.vplayer.mpv;
 
 import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
-import com.sun.jna.ptr.DoubleByReference;
 import com.sun.jna.ptr.PointerByReference;
 import net.kunmc.lab.vplayer.video.VEventHandler;
-import org.apache.commons.lang3.ArrayUtils;
-
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 
 import static net.kunmc.lab.vplayer.mpv.MpvLibrary.*;
 import static net.kunmc.lab.vplayer.mpv.MpvLibrary.mpv_event_id.*;
-import static net.kunmc.lab.vplayer.mpv.MpvLibrary.mpv_format.MPV_FORMAT_DOUBLE;
 import static net.kunmc.lab.vplayer.mpv.MpvLibrary.mpv_format.MPV_FORMAT_INT64;
 import static net.kunmc.lab.vplayer.mpv.MpvLibrary.mpv_render_param_type.*;
 import static net.kunmc.lab.vplayer.mpv.MpvLibrary.mpv_render_update_flag.MPV_RENDER_UPDATE_FRAME;
@@ -26,8 +17,10 @@ public class MPlayerClient {
     private mpv_opengl_fbo fbo_settings;
     private mpv_render_param head_render_param;
     private PointerByReference mpv_gl;
-    private final DoubleByReference volumeRef = new DoubleByReference();
-    private final MGetEventDispatcher dispatcherGet = new MGetEventDispatcher();
+    private MPlayerEventDispatchers dispatchers;
+
+    private boolean volumeChanged = true;
+    private double volume;
 
     private boolean redraw = false;
     public final on_render_update on_mpv_redraw = d -> {
@@ -49,12 +42,13 @@ public class MPlayerClient {
 
         MPlayer.validateStatus(MPlayer.mpv, MPlayer.mpv.mpv_initialize(handle));
 
+        dispatchers = new MPlayerEventDispatchers(handle);
+
         initMpvRenderer(MPlayer.mpv, handle);
     }
 
-    public Optional<String> command(String[] args) {
-        // Play this file.
-        return MPlayer.getStatus(MPlayer.mpv, MPlayer.mpv.mpv_command_async(handle, 0, ArrayUtils.add(args, null)));
+    public MPlayerEventDispatchers getDispatchers() {
+        return dispatchers;
     }
 
     public void renderFrame(VEventHandler handler) {
@@ -63,8 +57,8 @@ public class MPlayerClient {
         MPlayer.mpv.mpv_render_context_report_swap(mpv_gl.getValue());
     }
 
-    public void setVolume(double volume) {
-        volumeRef.setValue(Math.max(0, Math.min(1, volume)) * 100);
+    public void setVolume(double volumeIn) {
+        volume = Math.max(0, Math.min(1, volumeIn)) * 100;
     }
 
     public void destroy() {
@@ -89,39 +83,14 @@ public class MPlayerClient {
         // glDebugMessageInsert(GL_DEBUG_SOURCE_APPLICATION, GL_DEBUG_TYPE_MARKER, 114514, GL_DEBUG_SEVERITY_HIGH, "MPV Render Start");
         MPlayer.mpv.mpv_render_context_render(mpv_gl.getValue(), head_render_param);
         // glDebugMessageInsert(GL_DEBUG_SOURCE_APPLICATION, GL_DEBUG_TYPE_MARKER, 1919810, GL_DEBUG_SEVERITY_HIGH, "MPV Render End");
-        MPlayer.mpv.mpv_set_property_async(handle, 0, "volume", MPV_FORMAT_DOUBLE, volumeRef.getPointer());
-    }
-
-    private static class MEventDispatcher<T> {
-        private AtomicLong lastId = new AtomicLong();
-        private Map<Long, CompletableFuture<T>> futures = new ConcurrentHashMap<>();
-
-        protected long generateId() {
-            return lastId.getAndIncrement();
-        }
-
-        protected CompletableFuture<T> onRequest(long id) {
-            CompletableFuture<T> future = new CompletableFuture<>();
-            futures.put(id, future);
-            return future;
-        }
-
-        public void onReply(long id, T data) {
-            CompletableFuture<T> future = futures.remove(id);
-            if (future != null)
-                future.complete(data);
-        }
-    }
-
-    private class MGetEventDispatcher extends MEventDispatcher<Pointer> {
-        public CompletableFuture<Pointer> getPropertyAsync(String name, int format) {
-            long id = generateId();
-            MPlayer.mpv.mpv_get_property_async(handle, id, name, format);
-            return onRequest(id);
-        }
     }
 
     public void processEvent(VEventHandler handler) {
+        if (volumeChanged) {
+            volumeChanged = false;
+            dispatchers.dispatcherPropertySet.setPropertyAsyncDouble("volume", volume).thenRun(() -> volumeChanged = true);
+        }
+
         mpv_event event = MPlayer.mpv.mpv_wait_event(handle, 0);
         switch (event.event_id) {
             case MPV_EVENT_FILE_LOADED: {
@@ -129,8 +98,8 @@ public class MPlayerClient {
             break;
 
             case MPV_EVENT_VIDEO_RECONFIG: {
-                dispatcherGet.getPropertyAsync("dwidth", MPV_FORMAT_INT64)
-                        .thenAcceptBoth(dispatcherGet.getPropertyAsync("dheight", MPV_FORMAT_INT64), (widthPtr, heightPtr) -> {
+                dispatchers.dispatcherPropertyGet.getPropertyAsync("dwidth", MPV_FORMAT_INT64)
+                        .thenAcceptBoth(dispatchers.dispatcherPropertyGet.getPropertyAsync("dheight", MPV_FORMAT_INT64), (widthPtr, heightPtr) -> {
                             long width = widthPtr.getLong(0);
                             long height = heightPtr.getLong(0);
                             if (width > 0 && height > 0)
@@ -139,10 +108,20 @@ public class MPlayerClient {
             }
             break;
 
+            case MPV_EVENT_COMMAND_REPLY: {
+                dispatchers.dispatcherCommand.onReply(event.reply_userdata, null);
+            }
+            break;
+
             case MPV_EVENT_GET_PROPERTY_REPLY: {
                 mpv_event_property prop = new mpv_event_property(event.data);
                 prop.read();
-                dispatcherGet.onReply(event.reply_userdata, prop.data);
+                dispatchers.dispatcherPropertyGet.onReply(event.reply_userdata, prop.data);
+            }
+            break;
+
+            case MPV_EVENT_SET_PROPERTY_REPLY: {
+                dispatchers.dispatcherPropertySet.onReply(event.reply_userdata, null);
             }
             break;
 

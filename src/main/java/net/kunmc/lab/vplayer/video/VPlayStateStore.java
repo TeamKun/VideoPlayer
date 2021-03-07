@@ -25,19 +25,28 @@ public class VPlayStateStore {
         timer.setPaused(paused);
     }
 
+    public void reapply(VDisplayClient display) {
+        VDisplayController controller = display.getController();
+        controller.setFile(file).thenRun(() -> {
+            controller.setTime(timer.getTime());
+            controller.setPaused(paused);
+        });
+    }
+
     public void dispatch(VDisplayClient display, PlayState action) {
+        VDisplayController controller = display.getController();
         if (!Objects.equals(file, action.file)) {
             file = action.file;
-            display.command("loadfile", action.file);
+            controller.setFile(action.file);
         }
         {
             timer.set(action.time);
-            display.command("seek", String.format("%.2f", timer.getTime()), "absolute");
+            controller.setTime(timer.getTime());
         }
         {
             paused = action.paused;
             timer.setPaused(paused);
-            display.command("set", "pause", paused ? "yes" : "no");
+            controller.setPaused(paused);
         }
     }
 }
