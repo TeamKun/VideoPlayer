@@ -7,7 +7,6 @@ import net.kunmc.lab.vplayer.video.VEventHandler;
 
 import static net.kunmc.lab.vplayer.mpv.MpvLibrary.*;
 import static net.kunmc.lab.vplayer.mpv.MpvLibrary.mpv_event_id.*;
-import static net.kunmc.lab.vplayer.mpv.MpvLibrary.mpv_format.MPV_FORMAT_INT64;
 import static net.kunmc.lab.vplayer.mpv.MpvLibrary.mpv_render_param_type.*;
 import static net.kunmc.lab.vplayer.mpv.MpvLibrary.mpv_render_update_flag.MPV_RENDER_UPDATE_FRAME;
 import static org.lwjgl.opengl.GL11.GL_RGBA8;
@@ -98,12 +97,10 @@ public class MPlayerClient {
             break;
 
             case MPV_EVENT_VIDEO_RECONFIG: {
-                dispatchers.dispatcherPropertyGet.getPropertyAsync("dwidth", MPV_FORMAT_INT64)
-                        .thenAcceptBoth(dispatchers.dispatcherPropertyGet.getPropertyAsync("dheight", MPV_FORMAT_INT64), (widthPtr, heightPtr) -> {
-                            long width = widthPtr.getLong(0);
-                            long height = heightPtr.getLong(0);
+                dispatchers.dispatcherPropertyGet.getPropertyAsyncLong("dwidth")
+                        .thenAcceptBoth(dispatchers.dispatcherPropertyGet.getPropertyAsyncLong("dheight"), (width, height) -> {
                             if (width > 0 && height > 0)
-                                handler.onResize((int) width, (int) height);
+                                handler.onResize((int) (long) width, (int) (long) height);
                         });
             }
             break;

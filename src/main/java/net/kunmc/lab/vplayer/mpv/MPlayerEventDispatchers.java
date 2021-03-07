@@ -22,7 +22,7 @@ public class MPlayerEventDispatchers {
     public final MCommandEventDispatcher dispatcherCommand = new MCommandEventDispatcher();
 
     public class MGetPropertyEventDispatcher extends MEventDispatcher<Pointer> {
-        public CompletableFuture<Pointer> getPropertyAsync(String name, int format) {
+        private CompletableFuture<Pointer> getPropertyAsync(String name, int format) {
             long id = generateId();
             MPlayer.mpv.mpv_get_property_async(handle, id, name, format);
             return onRequest(id);
