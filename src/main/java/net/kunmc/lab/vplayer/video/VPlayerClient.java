@@ -9,6 +9,7 @@ import java.util.Optional;
 public class VPlayerClient implements VEventHandler {
     private final MPlayerClient playerClient;
     private final VRenderer renderer;
+    private boolean started;
 
     public VPlayerClient() {
         playerClient = new MPlayerClient();
@@ -28,9 +29,10 @@ public class VPlayerClient implements VEventHandler {
     }
 
     public void renderFrame() {
-        renderer.initFrame();
-        playerClient.renderFrame();
         playerClient.processEvent(this);
+        if (!started)
+            renderer.initFrame();
+        playerClient.renderFrame(this);
     }
 
     public void render(MatrixStack stack, Quad quad) {
@@ -39,10 +41,15 @@ public class VPlayerClient implements VEventHandler {
     }
 
     @Override
+    public void onBeforeRender() {
+        started = true;
+    }
+
+    @Override
     public void onResize(int width, int height) {
         playerClient.updateFbo(width, height);
         renderer.updateFbo(width, height);
-        renderer.initFrame();
+        playerClient.renderImmediately();
     }
 
     public void destroy() {

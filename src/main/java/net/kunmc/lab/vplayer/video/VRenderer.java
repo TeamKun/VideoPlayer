@@ -77,6 +77,10 @@ public class VRenderer {
         framebuffer.setFramebufferColor(0.0F, 0.0F, 0.0F, 1.0F);
     }
 
+    public void clear() {
+        framebuffer.framebufferClear(IS_RUNNING_ON_MAC);
+    }
+
     public void initFrame() {
         glPushAttrib(GL_TRANSFORM_BIT);
 
@@ -91,7 +95,6 @@ public class VRenderer {
         framebuffer.bindFramebuffer(true);
 
         RenderSystem.enableTexture();
-        RenderSystem.disableBlend();
 
         {
             float w = framebuffer.framebufferWidth;
@@ -110,6 +113,9 @@ public class VRenderer {
             Tessellator tessellator = Tessellator.getInstance();
             BufferBuilder bufferbuilder = tessellator.getBuffer();
 
+            RenderSystem.disableBlend();
+            RenderSystem.disableDepthTest();
+
             {
                 manager.bindTexture(gradientTexture);
                 bufferbuilder.begin(GL_QUADS, DefaultVertexFormats.POSITION_TEX);
@@ -117,10 +123,10 @@ public class VRenderer {
                 float f = (System.currentTimeMillis() % 3000) / 3000f;
                 float s = .1f;
 
-                bufferbuilder.pos(-1, 1, 0).tex(nw0 * s - f, nh0).endVertex();
-                bufferbuilder.pos(-1, -1, 0).tex(nw0 * s - f, nh1).endVertex();
-                bufferbuilder.pos(1, -1, 0).tex(nw1 * s - f, nh1).endVertex();
-                bufferbuilder.pos(1, 1, 0).tex(nw1 * s - f, nh0).endVertex();
+                bufferbuilder.pos(-.8, .8, 0).tex(nw0 * s - f, nh0).endVertex();
+                bufferbuilder.pos(-.8, -.8, 0).tex(nw0 * s - f, nh1).endVertex();
+                bufferbuilder.pos(.8, -.8, 0).tex(nw1 * s - f, nh1).endVertex();
+                bufferbuilder.pos(.8, .8, 0).tex(nw1 * s - f, nh0).endVertex();
 
                 bufferbuilder.finishDrawing();
                 WorldVertexBufferUploader.draw(bufferbuilder);

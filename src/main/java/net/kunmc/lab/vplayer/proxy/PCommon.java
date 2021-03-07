@@ -137,6 +137,7 @@ public class PCommon {
                                                     WDisplaySaveData state = WDisplaySaveData.get(server.getWorld(DimensionType.OVERWORLD));
                                                     state.dispatchState(name, s -> {
                                                         s.file = url;
+                                                        s.paused = true;
                                                         return s;
                                                     });
 

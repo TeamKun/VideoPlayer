@@ -34,6 +34,10 @@ public class MPlayerClient {
         redraw = true;
     };
 
+    public void requestRedraw() {
+        redraw = true;
+    }
+
     public void init() {
         handle = MPlayer.mpv.mpv_create();
         if (handle == 0)
@@ -53,8 +57,8 @@ public class MPlayerClient {
         return MPlayer.getStatus(MPlayer.mpv, MPlayer.mpv.mpv_command_async(handle, 0, ArrayUtils.add(args, null)));
     }
 
-    public void renderFrame() {
-        renderMpv();
+    public void renderFrame(VEventHandler handler) {
+        renderMpv(handler);
 
         MPlayer.mpv.mpv_render_context_report_swap(mpv_gl.getValue());
     }
@@ -69,18 +73,23 @@ public class MPlayerClient {
         MPlayer.mpv.mpv_terminate_destroy(handle);
     }
 
-    private void renderMpv() {
+    private void renderMpv(VEventHandler handler) {
         if (redraw) {
             redraw = false;
 
             int flags = MPlayer.mpv.mpv_render_context_update(mpv_gl.getValue());
             if ((flags & MPV_RENDER_UPDATE_FRAME) != 0) {
-                // glDebugMessageInsert(GL_DEBUG_SOURCE_APPLICATION, GL_DEBUG_TYPE_MARKER, 114514, GL_DEBUG_SEVERITY_HIGH, "MPV Render Start");
-                MPlayer.mpv.mpv_render_context_render(mpv_gl.getValue(), head_render_param);
-                // glDebugMessageInsert(GL_DEBUG_SOURCE_APPLICATION, GL_DEBUG_TYPE_MARKER, 1919810, GL_DEBUG_SEVERITY_HIGH, "MPV Render End");
-                MPlayer.mpv.mpv_set_property_async(handle, 0, "volume", MPV_FORMAT_DOUBLE, volumeRef.getPointer());
+                handler.onBeforeRender();
+                renderImmediately();
             }
         }
+    }
+
+    public void renderImmediately() {
+        // glDebugMessageInsert(GL_DEBUG_SOURCE_APPLICATION, GL_DEBUG_TYPE_MARKER, 114514, GL_DEBUG_SEVERITY_HIGH, "MPV Render Start");
+        MPlayer.mpv.mpv_render_context_render(mpv_gl.getValue(), head_render_param);
+        // glDebugMessageInsert(GL_DEBUG_SOURCE_APPLICATION, GL_DEBUG_TYPE_MARKER, 1919810, GL_DEBUG_SEVERITY_HIGH, "MPV Render End");
+        MPlayer.mpv.mpv_set_property_async(handle, 0, "volume", MPV_FORMAT_DOUBLE, volumeRef.getPointer());
     }
 
     private static class MEventDispatcher<T> {
