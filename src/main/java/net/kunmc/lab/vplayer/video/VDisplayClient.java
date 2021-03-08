@@ -79,6 +79,7 @@ public class VDisplayClient extends VDisplay {
                 state = VState.VALIDATED;
                 requestedState = VRequestedState.NONE;
                 playStateStore.reapply(this);
+                playStateStore.observe(this);
                 break;
             case INVALIDATE:
                 client.destroy();

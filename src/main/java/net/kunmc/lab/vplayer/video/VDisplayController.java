@@ -13,7 +13,9 @@ public interface VDisplayController {
 
     CompletableFuture<Double> getTime();
 
-    CompletableFuture<Boolean> getPaused();
+    CompletableFuture<Boolean> isPause();
 
-    RepeatObservable<Double> getDuration();
+    RepeatObservable<Double> getDurationObserve();
+
+    RepeatObservable<Boolean> isPauseObserve();
 }

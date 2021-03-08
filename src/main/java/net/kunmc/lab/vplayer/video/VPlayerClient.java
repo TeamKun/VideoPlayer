@@ -17,6 +17,8 @@ public class VPlayerClient implements VEventHandler {
     private VDisplayController controller = new VDisplayController() {
         private final Supplier<RepeatObservable<Double>> duration = Suppliers.memoize(
                 () -> VPlayerClient.this.playerClient.getDispatchers().dispatcherPropertyChange.observeAsyncDouble("duration"));
+        private final Supplier<RepeatObservable<Boolean>> pause = Suppliers.memoize(
+                () -> VPlayerClient.this.playerClient.getDispatchers().dispatcherPropertyChange.observeAsyncBoolean("pause"));
 
         @Override
         public CompletableFuture<Void> setFile(String file) {
@@ -39,13 +41,18 @@ public class VPlayerClient implements VEventHandler {
         }
 
         @Override
-        public CompletableFuture<Boolean> getPaused() {
+        public CompletableFuture<Boolean> isPause() {
             return playerClient.getDispatchers().dispatcherPropertyGet.getPropertyAsyncBoolean("pause");
         }
 
         @Override
-        public RepeatObservable<Double> getDuration() {
+        public RepeatObservable<Double> getDurationObserve() {
             return duration.get();
+        }
+
+        @Override
+        public RepeatObservable<Boolean> isPauseObserve() {
+            return pause.get();
         }
     };
 

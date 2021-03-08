@@ -4,17 +4,20 @@ import net.kunmc.lab.vplayer.model.PlayState;
 import net.kunmc.lab.vplayer.util.Timer;
 
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 public class VPlayStateStore {
     private String file;
     private final Timer timer = Timer.createUnstarted();
     private boolean paused;
+    private float duration;
 
     public PlayState fetch() {
         PlayState state = new PlayState();
         state.file = file;
         state.time = timer.getTime();
         state.paused = paused;
+        state.duration = duration;
         return state;
     }
 
@@ -23,6 +26,7 @@ public class VPlayStateStore {
         timer.set(action.time);
         paused = action.paused;
         timer.setPaused(paused);
+        duration = action.duration;
     }
 
     public void reapply(VDisplayClient display) {
@@ -35,18 +39,37 @@ public class VPlayStateStore {
 
     public void dispatch(VDisplayClient display, PlayState action) {
         VDisplayController controller = display.getController();
+        CompletableFuture<Void> fileFuture = CompletableFuture.completedFuture(null);
         if (!Objects.equals(file, action.file)) {
             file = action.file;
-            controller.setFile(action.file);
+            fileFuture = controller.setFile(action.file);
         }
-        {
-            timer.set(action.time);
-            controller.setTime(timer.getTime());
-        }
-        {
-            paused = action.paused;
-            timer.setPaused(paused);
-            controller.setPaused(paused);
-        }
+        fileFuture.thenRun(() -> {
+            {
+                timer.set(action.time);
+                controller.setTime(timer.getTime());
+            }
+            {
+                paused = action.paused;
+                timer.setPaused(paused);
+                controller.setPaused(paused);
+            }
+            duration = action.duration;
+        });
+    }
+
+    public void observe(VDisplayClient display) {
+        display.getController().getDurationObserve().thenAccept(d -> {
+            if (d != null)
+                duration = (float) (double) d;
+        });
+        display.getController().isPauseObserve().thenAccept(p -> {
+            if (p != null)
+                paused = p;
+            display.getController().getTime().thenAccept(t -> {
+                if (t != null)
+                    timer.set((float) (double) t);
+            });
+        });
     }
 }
