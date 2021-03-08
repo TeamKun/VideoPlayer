@@ -4,6 +4,8 @@ import com.mojang.blaze3d.matrix.MatrixStack;
 import net.kunmc.lab.vplayer.model.PlayState;
 import net.kunmc.lab.vplayer.model.Quad;
 import net.kunmc.lab.vplayer.mpv.MPlayer;
+import net.kunmc.lab.vplayer.network.PacketContainer;
+import net.kunmc.lab.vplayer.network.PacketDispatcher;
 import net.kunmc.lab.vplayer.patch.VideoPatch;
 import net.kunmc.lab.vplayer.patch.VideoPatchEvent;
 import net.kunmc.lab.vplayer.patch.VideoPatchOperation;
@@ -46,7 +48,16 @@ public class PClient extends PCommon {
     }
 
     @SubscribeEvent
-    public void onClientPatch(VideoPatchEvent.Client event) {
+    public void onClientPatchSend(VideoPatchEvent.Client.SendToServer event) {
+        if (Minecraft.getInstance().getConnection() == null)
+            return;
+
+        PacketContainer packet = new PacketContainer(event.getOperation(), event.getPatches());
+        PacketDispatcher.INSTANCE.sendToServer(packet);
+    }
+
+    @SubscribeEvent
+    public void onClientPatchReceive(VideoPatchEvent.Client.ReceiveFromServer event) {
         VideoPatchOperation op = event.getOperation();
         List<VideoPatch> patches = event.getPatches();
 

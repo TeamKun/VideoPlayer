@@ -40,4 +40,8 @@ public class PacketDispatcher {
         channel.sendTo(packet, network, NetworkDirection.PLAY_TO_CLIENT);
     }
 
+    public void sendToServer(PacketContainer packet) {
+        channel.sendToServer(packet);
+    }
+
 }

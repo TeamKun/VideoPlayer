@@ -21,15 +21,31 @@ public abstract class VideoPatchEvent extends Event {
         this.patches = patches;
     }
 
-    public static class Client extends VideoPatchEvent {
-        public Client(VideoPatchOperation operation, List<VideoPatch> patches) {
-            super(operation, patches);
+    public interface Server {
+        class ReceiveFromClient extends VideoPatchEvent {
+            public ReceiveFromClient(VideoPatchOperation operation, List<VideoPatch> patches) {
+                super(operation, patches);
+            }
+        }
+
+        class SendToClient extends VideoPatchEvent {
+            public SendToClient(VideoPatchOperation operation, List<VideoPatch> patches) {
+                super(operation, patches);
+            }
         }
     }
 
-    public static class Server extends VideoPatchEvent {
-        public Server(VideoPatchOperation operation, List<VideoPatch> patches) {
-            super(operation, patches);
+    public interface Client {
+        class ReceiveFromServer extends VideoPatchEvent {
+            public ReceiveFromServer(VideoPatchOperation operation, List<VideoPatch> patches) {
+                super(operation, patches);
+            }
+        }
+
+        class SendToServer extends VideoPatchEvent {
+            public SendToServer(VideoPatchOperation operation, List<VideoPatch> patches) {
+                super(operation, patches);
+            }
         }
     }
 }

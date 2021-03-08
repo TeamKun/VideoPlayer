@@ -47,21 +47,21 @@ public class WDisplaySaveData extends WorldSavedData {
     // Operation
     public void create(String name) {
         UUID uuid = UUID.randomUUID();
-        VDisplay display = new VDisplay();
+        VDisplay display = new VDisplay(uuid);
         Optional.ofNullable(displayMap.put(name, Pair.of(uuid, display))).ifPresent(e -> {
             e.getRight().destroy();
 
-            MinecraftForge.EVENT_BUS.post(new VideoPatchEvent.Server(VideoPatchOperation.DELETE, Collections.singletonList(new VideoPatch(e.getLeft(), null, null))));
+            MinecraftForge.EVENT_BUS.post(new VideoPatchEvent.Server.SendToClient(VideoPatchOperation.DELETE, Collections.singletonList(new VideoPatch(e.getLeft(), null, null))));
         });
 
-        MinecraftForge.EVENT_BUS.post(new VideoPatchEvent.Server(VideoPatchOperation.UPDATE, Collections.singletonList(new VideoPatch(uuid, null, display.fetchState()))));
+        MinecraftForge.EVENT_BUS.post(new VideoPatchEvent.Server.SendToClient(VideoPatchOperation.UPDATE, Collections.singletonList(new VideoPatch(uuid, null, display.fetchState()))));
     }
 
     public void destroy(String name) {
         Optional.ofNullable(displayMap.remove(name)).ifPresent(e -> {
             e.getRight().destroy();
 
-            MinecraftForge.EVENT_BUS.post(new VideoPatchEvent.Server(VideoPatchOperation.DELETE, Collections.singletonList(new VideoPatch(e.getLeft(), null, null))));
+            MinecraftForge.EVENT_BUS.post(new VideoPatchEvent.Server.SendToClient(VideoPatchOperation.DELETE, Collections.singletonList(new VideoPatch(e.getLeft(), null, null))));
         });
     }
 
@@ -70,7 +70,7 @@ public class WDisplaySaveData extends WorldSavedData {
             VDisplay display = e.getRight();
             display.dispatchState(dispatch.apply(display.fetchState()));
 
-            MinecraftForge.EVENT_BUS.post(new VideoPatchEvent.Server(VideoPatchOperation.UPDATE, Collections.singletonList(new VideoPatch(e.getLeft(), display.getQuad(), display.fetchState()))));
+            MinecraftForge.EVENT_BUS.post(new VideoPatchEvent.Server.SendToClient(VideoPatchOperation.UPDATE, Collections.singletonList(new VideoPatch(e.getLeft(), display.getQuad(), display.fetchState()))));
         });
     }
 
@@ -79,7 +79,7 @@ public class WDisplaySaveData extends WorldSavedData {
             VDisplay display = e.getRight();
             display.setQuad(quad);
 
-            MinecraftForge.EVENT_BUS.post(new VideoPatchEvent.Server(VideoPatchOperation.UPDATE, Collections.singletonList(new VideoPatch(e.getLeft(), display.getQuad(), display.fetchState()))));
+            MinecraftForge.EVENT_BUS.post(new VideoPatchEvent.Server.SendToClient(VideoPatchOperation.UPDATE, Collections.singletonList(new VideoPatch(e.getLeft(), display.getQuad(), display.fetchState()))));
         });
     }
 

@@ -45,7 +45,10 @@ public class PacketContainer {
         if (message == null || message.operation == null)
             return;
 
-        MinecraftForge.EVENT_BUS.post(new VideoPatchEvent.Client(message.operation, message.patches));
+        if (ctx.get().getDirection().getReceptionSide().isClient())
+            MinecraftForge.EVENT_BUS.post(new VideoPatchEvent.Client.ReceiveFromServer(message.operation, message.patches));
+        else
+            MinecraftForge.EVENT_BUS.post(new VideoPatchEvent.Server.ReceiveFromClient(message.operation, message.patches));
 
         ctx.get().setPacketHandled(true);
     }

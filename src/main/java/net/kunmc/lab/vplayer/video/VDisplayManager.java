@@ -14,7 +14,7 @@ public class VDisplayManager implements DisplayManagaer {
 
     @Override
     public VDisplayClient create(UUID uuid) {
-        VDisplayClient display = new VDisplayClient();
+        VDisplayClient display = new VDisplayClient(uuid);
         Optional.ofNullable(displayMap.put(uuid, display)).ifPresent(VDisplay::destroy);
         addQueue.add(display);
         return display;

@@ -6,11 +6,17 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.util.math.Vec3d;
 
+import java.util.UUID;
+
 public class VDisplayClient extends VDisplay {
 
     private VRequestedState requestedState = VRequestedState.VALIDATE;
     private VPlayerClient client;
     private PlayState playStateQueue;
+
+    public VDisplayClient(UUID uuid) {
+        super(uuid);
+    }
 
     @Override
     public PlayState fetchState() {

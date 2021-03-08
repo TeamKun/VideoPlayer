@@ -9,6 +9,7 @@ import net.kunmc.lab.vplayer.patch.VideoPatch;
 import net.kunmc.lab.vplayer.patch.VideoPatchEvent;
 import net.kunmc.lab.vplayer.patch.VideoPatchOperation;
 import net.kunmc.lab.vplayer.world.WDisplaySaveData;
+import net.minecraft.client.Minecraft;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.entity.player.PlayerEntity;
@@ -44,7 +45,7 @@ public class PCommon {
     private MinecraftServer server;
 
     @SubscribeEvent
-    public void onServerPatch(VideoPatchEvent.Server event) {
+    public void onServerPatchSend(VideoPatchEvent.Server.SendToClient event) {
         if (server == null)
             return;
 
@@ -53,6 +54,13 @@ public class PCommon {
                 .map(p -> p.connection)
                 .filter(Objects::nonNull)
                 .forEach(p -> PacketDispatcher.INSTANCE.send(p.getNetworkManager(), packet));
+    }
+
+    @SubscribeEvent
+    public void onServerPatchReceive(VideoPatchEvent.Server.ReceiveFromClient event) {
+        WDisplaySaveData state = WDisplaySaveData.get(server.getWorld(DimensionType.OVERWORLD));
+
+        state.
     }
 
     @SubscribeEvent

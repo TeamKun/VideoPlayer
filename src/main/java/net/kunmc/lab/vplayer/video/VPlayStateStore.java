@@ -1,8 +1,13 @@
 package net.kunmc.lab.vplayer.video;
 
 import net.kunmc.lab.vplayer.model.PlayState;
+import net.kunmc.lab.vplayer.patch.VideoPatch;
+import net.kunmc.lab.vplayer.patch.VideoPatchEvent;
+import net.kunmc.lab.vplayer.patch.VideoPatchOperation;
 import net.kunmc.lab.vplayer.util.Timer;
+import net.minecraftforge.common.MinecraftForge;
 
+import java.util.Collections;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
@@ -60,8 +65,12 @@ public class VPlayStateStore {
 
     public void observe(VDisplayClient display) {
         display.getController().getDurationObserve().thenAccept(d -> {
-            if (d != null)
+            if (d != null) {
                 duration = (float) (double) d;
+
+                MinecraftForge.EVENT_BUS.post(new VideoPatchEvent.Client.SendToServer(VideoPatchOperation.UPDATE,
+                        Collections.singletonList(new VideoPatch(display.uuid, display.quad, fetch()))));
+            }
         });
         display.getController().isPauseObserve().thenAccept(p -> {
             if (p != null)
