@@ -41,9 +41,9 @@ public class MPlayerClient {
 
         MPlayer.validateStatus(MPlayer.mpv, MPlayer.mpv.mpv_initialize(handle));
 
-        dispatchers = new MPlayerEventDispatchers(handle);
-
         initMpvRenderer(MPlayer.mpv, handle);
+
+        dispatchers = new MPlayerEventDispatchers(handle);
     }
 
     public MPlayerEventDispatchers getDispatchers() {
@@ -119,6 +119,13 @@ public class MPlayerClient {
 
             case MPV_EVENT_SET_PROPERTY_REPLY: {
                 dispatchers.dispatcherPropertySet.onReply(event.reply_userdata, null);
+            }
+            break;
+
+            case MPV_EVENT_PROPERTY_CHANGE: {
+                mpv_event_property prop = new mpv_event_property(event.data);
+                prop.read();
+                dispatchers.dispatcherPropertyChange.onReply(event.reply_userdata, prop.data);
             }
             break;
 

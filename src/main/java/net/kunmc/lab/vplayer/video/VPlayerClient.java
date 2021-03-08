@@ -1,10 +1,13 @@
 package net.kunmc.lab.vplayer.video;
 
+import com.google.common.base.Suppliers;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.kunmc.lab.vplayer.model.Quad;
 import net.kunmc.lab.vplayer.mpv.MPlayerClient;
+import net.kunmc.lab.vplayer.util.RepeatObservable;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Supplier;
 
 public class VPlayerClient implements VEventHandler {
     private final MPlayerClient playerClient;
@@ -12,6 +15,9 @@ public class VPlayerClient implements VEventHandler {
     private boolean started;
 
     private VDisplayController controller = new VDisplayController() {
+        private final Supplier<RepeatObservable<Double>> duration = Suppliers.memoize(
+                () -> VPlayerClient.this.playerClient.getDispatchers().dispatcherPropertyChange.observeAsyncDouble("duration"));
+
         @Override
         public CompletableFuture<Void> setFile(String file) {
             return playerClient.getDispatchers().dispatcherCommand.commandAsync("loadfile", file);
@@ -35,6 +41,11 @@ public class VPlayerClient implements VEventHandler {
         @Override
         public CompletableFuture<Boolean> getPaused() {
             return playerClient.getDispatchers().dispatcherPropertyGet.getPropertyAsyncBoolean("pause");
+        }
+
+        @Override
+        public RepeatObservable<Double> getDuration() {
+            return duration.get();
         }
     };
 

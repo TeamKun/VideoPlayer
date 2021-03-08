@@ -1,5 +1,7 @@
 package net.kunmc.lab.vplayer.video;
 
+import net.kunmc.lab.vplayer.util.RepeatObservable;
+
 import java.util.concurrent.CompletableFuture;
 
 public interface VDisplayController {
@@ -12,4 +14,6 @@ public interface VDisplayController {
     CompletableFuture<Double> getTime();
 
     CompletableFuture<Boolean> getPaused();
+
+    RepeatObservable<Double> getDuration();
 }

@@ -110,9 +110,17 @@ public interface MpvLibrary extends StdCallLibrary {
 
     int mpv_set_property_string(long handle, String name, String data);
 
-    int mpv_set_option_string(long handle, String name, String data);
+    int mpv_set_property_async(long handle, long reply_userdata, String name, int format, Pointer data);
+
+    int mpv_get_property_async(long handle, long reply_userdata, String name, int format);
+
+    int mpv_observe_property(long handle, long reply_userdata, String name, int format);
+
+    int mpv_unobserve_property(long handle, long registered_reply_userdata);
 
     void mpv_free(Pointer data);
+
+    int mpv_set_option_string(long handle, String name, String data);
 
     int mpv_set_option(long handle, String name, int format, Pointer data);
 
@@ -138,11 +146,7 @@ public interface MpvLibrary extends StdCallLibrary {
 
     int mpv_render_context_render(Pointer render_context, mpv_render_param params);
 
-    int mpv_set_property_async(long handle, long reply_userdata, String name, int format, Pointer data);
-
     void mpv_render_context_report_swap(Pointer render_context);
-
-    int mpv_get_property_async(long handle, long reply_userdata, String name, int format);
 
     class mpv_event extends Structure {
         public int event_id;
