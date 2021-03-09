@@ -3,6 +3,7 @@ package net.kunmc.lab.vplayer.proxy;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;
 import com.mojang.brigadier.Command;
+import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.kunmc.lab.vplayer.model.PlayState;
 import net.kunmc.lab.vplayer.model.Quad;
@@ -17,6 +18,7 @@ import net.minecraft.command.Commands;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextComponentUtils;
@@ -191,6 +193,8 @@ public class PCommon {
 
                                             WDisplaySaveData state = WDisplaySaveData.get(server.getWorld(DimensionType.OVERWORLD));
                                             state.dispatchState(name, s -> {
+                                                if (s.duration > 0 && s.time > s.duration)
+                                                    s.time = 0;
                                                 s.paused = false;
                                                 return s;
                                             });
@@ -210,6 +214,63 @@ public class PCommon {
 
                                             return Command.SINGLE_SUCCESS;
                                         })
+                                )
+                                .then(Commands.literal("seek")
+                                        .then(Commands.argument("sec", FloatArgumentType.floatArg())
+                                                .executes(ctx -> {
+                                                    String name = StringArgumentType.getString(ctx, "name");
+                                                    float sec = FloatArgumentType.getFloat(ctx, "sec");
+
+                                                    WDisplaySaveData state = WDisplaySaveData.get(server.getWorld(DimensionType.OVERWORLD));
+                                                    state.dispatchState(name, s -> {
+                                                        if (s.duration > 0)
+                                                            s.time = MathHelper.clamp(MathHelper.clamp(s.time, 0, s.duration) + sec, 0, s.duration);
+                                                        else
+                                                            s.time += sec;
+                                                        return s;
+                                                    });
+
+                                                    return Command.SINGLE_SUCCESS;
+                                                })
+                                        )
+                                )
+                                .then(Commands.literal("set")
+                                        .then(Commands.literal("%")
+                                                .then(Commands.argument("%", FloatArgumentType.floatArg())
+                                                        .executes(ctx -> {
+                                                            String name = StringArgumentType.getString(ctx, "name");
+                                                            float per = FloatArgumentType.getFloat(ctx, "%");
+
+                                                            WDisplaySaveData state = WDisplaySaveData.get(server.getWorld(DimensionType.OVERWORLD));
+                                                            state.dispatchState(name, s -> {
+                                                                if (s.duration > 0)
+                                                                    s.time = s.duration * per / 100f;
+                                                                return s;
+                                                            });
+
+                                                            return Command.SINGLE_SUCCESS;
+                                                        })
+                                                )
+                                        )
+                                        .then(Commands.literal("sec")
+                                                .then(Commands.argument("sec", FloatArgumentType.floatArg())
+                                                        .executes(ctx -> {
+                                                            String name = StringArgumentType.getString(ctx, "name");
+                                                            float sec = FloatArgumentType.getFloat(ctx, "sec");
+
+                                                            WDisplaySaveData state = WDisplaySaveData.get(server.getWorld(DimensionType.OVERWORLD));
+                                                            state.dispatchState(name, s -> {
+                                                                if (s.duration > 0)
+                                                                    s.time = MathHelper.clamp(sec, 0, s.duration);
+                                                                else
+                                                                    s.time = sec;
+                                                                return s;
+                                                            });
+
+                                                            return Command.SINGLE_SUCCESS;
+                                                        })
+                                                )
+                                        )
                                 )
                                 .then(Commands.literal("destroy")
                                         .executes(ctx -> {
