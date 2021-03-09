@@ -1,7 +1,10 @@
 package net.kunmc.lab.vplayer.proxy;
 
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
+import net.kunmc.lab.vplayer.model.PlayState;
 import net.kunmc.lab.vplayer.model.Quad;
 import net.kunmc.lab.vplayer.network.PacketContainer;
 import net.kunmc.lab.vplayer.network.PacketDispatcher;
@@ -24,8 +27,11 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class PCommon {
@@ -42,6 +48,7 @@ public class PCommon {
     }
 
     private MinecraftServer server;
+    private Table<UUID, UUID, Double> durationTable = HashBasedTable.create();
 
     @SubscribeEvent
     public void onServerPatchSend(VideoPatchEvent.Server.SendToClient event) {
@@ -59,6 +66,33 @@ public class PCommon {
     public void onServerPatchReceive(VideoPatchEvent.Server.ReceiveFromClient event) {
         WDisplaySaveData state = WDisplaySaveData.get(server.getWorld(DimensionType.OVERWORLD));
 
+        if (event.getOperation() == VideoPatchOperation.UPDATE) {
+            event.getPatches().forEach(e -> {
+                Optional.ofNullable(state.get(e.getId())).ifPresent(d -> {
+                    UUID displayId = d.getUUID();
+                    UUID playerId = event.getPlayer().getGameProfile().getId();
+                    PlayState newState = e.getState();
+                    if (newState != null) {
+                        float duration = newState.duration;
+                        if (duration >= 0)
+                            durationTable.put(displayId, playerId, (double) duration);
+                    }
+                    durationTable.row(displayId).values().stream()
+                            .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()))
+                            .entrySet()
+                            .stream()
+                            .max(Map.Entry.comparingByValue())
+                            .ifPresent(f -> {
+                                float key = (float) (double) f.getKey();
+                                PlayState playState = d.fetchState();
+                                if (playState.duration != key) {
+                                    playState.duration = key;
+                                    d.dispatchState(playState);
+                                }
+                            });
+                });
+            });
+        }
     }
 
     @SubscribeEvent

@@ -1,5 +1,6 @@
 package net.kunmc.lab.vplayer.patch;
 
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraftforge.eventbus.api.Event;
 
 import java.util.List;
@@ -23,8 +24,15 @@ public abstract class VideoPatchEvent extends Event {
 
     public interface Server {
         class ReceiveFromClient extends VideoPatchEvent {
-            public ReceiveFromClient(VideoPatchOperation operation, List<VideoPatch> patches) {
+            private ServerPlayerEntity player;
+
+            public ReceiveFromClient(VideoPatchOperation operation, List<VideoPatch> patches, ServerPlayerEntity player) {
                 super(operation, patches);
+                this.player = player;
+            }
+
+            public ServerPlayerEntity getPlayer() {
+                return player;
             }
         }
 

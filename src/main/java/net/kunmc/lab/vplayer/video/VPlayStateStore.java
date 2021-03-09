@@ -15,7 +15,7 @@ public class VPlayStateStore {
     private String file;
     private final Timer timer = Timer.createUnstarted();
     private boolean paused;
-    private float duration;
+    private float duration = -1;
 
     public PlayState fetch() {
         PlayState state = new PlayState();
