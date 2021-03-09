@@ -1,20 +1,22 @@
 package net.kunmc.lab.vplayer.model;
 
-import net.kunmc.lab.vplayer.video.VDisplay;
-
 import java.util.List;
-import java.util.UUID;
 
-public interface DisplayManagaer {
-    Display create(UUID uuid);
+public interface DisplayManagaer<ID, D extends Display> {
+    D create(ID id);
 
-    VDisplay computeIfAbsent(UUID uuid);
+    default D computeIfAbsent(ID id) {
+        D display = get(id);
+        if (display == null)
+            display = create(id);
+        return display;
+    }
 
-    Display get(UUID uuid);
+    D get(ID id);
 
-    void destroy(UUID uuid);
+    void destroy(ID id);
 
     void clear();
 
-    List<Display> list();
+    List<D> list();
 }

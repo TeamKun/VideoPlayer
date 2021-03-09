@@ -20,6 +20,11 @@ public class VDisplay implements Display {
     }
 
     @Override
+    public UUID getUUID() {
+        return uuid;
+    }
+
+    @Override
     public void setQuad(@Nullable Quad quadIn) {
         quad = quadIn;
     }

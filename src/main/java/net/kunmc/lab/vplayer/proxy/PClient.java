@@ -11,7 +11,7 @@ import net.kunmc.lab.vplayer.patch.VideoPatchEvent;
 import net.kunmc.lab.vplayer.patch.VideoPatchOperation;
 import net.kunmc.lab.vplayer.util.Timer;
 import net.kunmc.lab.vplayer.video.VDisplay;
-import net.kunmc.lab.vplayer.video.VDisplayManager;
+import net.kunmc.lab.vplayer.video.VDisplayManagerClient;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.util.math.Vec3d;
@@ -28,7 +28,7 @@ import java.util.UUID;
 
 public class PClient extends PCommon {
 
-    private final VDisplayManager manager = new VDisplayManager();
+    private final VDisplayManagerClient manager = new VDisplayManagerClient();
 
     @SubscribeEvent
     public void doClientStuff(final FMLClientSetupEvent ev) {

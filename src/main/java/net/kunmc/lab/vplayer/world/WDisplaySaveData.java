@@ -1,17 +1,18 @@
 package net.kunmc.lab.vplayer.world;
 
+import net.kunmc.lab.vplayer.model.DisplayManagaer;
 import net.kunmc.lab.vplayer.model.PlayState;
 import net.kunmc.lab.vplayer.model.Quad;
 import net.kunmc.lab.vplayer.patch.VideoPatch;
 import net.kunmc.lab.vplayer.patch.VideoPatchEvent;
 import net.kunmc.lab.vplayer.patch.VideoPatchOperation;
 import net.kunmc.lab.vplayer.video.VDisplay;
+import net.kunmc.lab.vplayer.video.VDisplayManager;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraft.world.storage.DimensionSavedDataManager;
 import net.minecraft.world.storage.WorldSavedData;
 import net.minecraftforge.common.MinecraftForge;
-import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -20,10 +21,11 @@ import java.util.function.Function;
 
 import static net.kunmc.lab.vplayer.VideoPlayer.MODID;
 
-public class WDisplaySaveData extends WorldSavedData {
+public class WDisplaySaveData extends WorldSavedData implements DisplayManagaer<String, VDisplay> {
     private static final String DATA_NAME = MODID + "_displays";
 
-    private final Map<String, Pair<UUID, VDisplay>> displayMap = new ConcurrentHashMap<>();
+    private final Map<String, UUID> displayNames = new ConcurrentHashMap<>();
+    private final VDisplayManager manager = new VDisplayManager();
 
     // Required constructors
     public WDisplaySaveData() {
@@ -44,51 +46,81 @@ public class WDisplaySaveData extends WorldSavedData {
         return null;
     }
 
-    // Operation
-    public void create(String name) {
-        UUID uuid = UUID.randomUUID();
-        VDisplay display = new VDisplay(uuid);
-        Optional.ofNullable(displayMap.put(name, Pair.of(uuid, display))).ifPresent(e -> {
-            e.getRight().destroy();
-
-            MinecraftForge.EVENT_BUS.post(new VideoPatchEvent.Server.SendToClient(VideoPatchOperation.DELETE, Collections.singletonList(new VideoPatch(e.getLeft(), null, null))));
-        });
-
-        MinecraftForge.EVENT_BUS.post(new VideoPatchEvent.Server.SendToClient(VideoPatchOperation.UPDATE, Collections.singletonList(new VideoPatch(uuid, null, display.fetchState()))));
+    private void sendToClient(VideoPatchOperation operation, List<VideoPatch> patches) {
+        MinecraftForge.EVENT_BUS.post(new VideoPatchEvent.Server.SendToClient(operation, patches));
     }
 
-    public void destroy(String name) {
-        Optional.ofNullable(displayMap.remove(name)).ifPresent(e -> {
-            e.getRight().destroy();
+    private void deleteDisplay(UUID e) {
+        if (manager.get(e) != null) {
+            manager.destroy(e);
 
-            MinecraftForge.EVENT_BUS.post(new VideoPatchEvent.Server.SendToClient(VideoPatchOperation.DELETE, Collections.singletonList(new VideoPatch(e.getLeft(), null, null))));
-        });
+            sendToClient(VideoPatchOperation.DELETE, Collections.singletonList(new VideoPatch(e, null, null)));
+        }
+    }
+
+    // Operation
+    @Override
+    public VDisplay create(String name) {
+        UUID uuid = UUID.randomUUID();
+        deleteDisplay(uuid);
+        VDisplay display = manager.create(uuid);
+        Optional.ofNullable(displayNames.put(name, uuid))
+                .ifPresent(this::deleteDisplay);
+
+        sendToClient(VideoPatchOperation.UPDATE, Collections.singletonList(new VideoPatch(uuid, null, display.fetchState())));
+
+        return display;
+    }
+
+    @Override
+    public void destroy(String name) {
+        Optional.ofNullable(displayNames.remove(name))
+                .ifPresent(this::deleteDisplay);
+    }
+
+    @Override
+    public void clear() {
+        manager.clear();
+        displayNames.clear();
+    }
+
+    @Override
+    public VDisplay get(String name) {
+        return Optional.ofNullable(displayNames.get(name))
+                .map(manager::get).orElse(null);
+    }
+
+    public VDisplay get(UUID id) {
+        return manager.get(id);
     }
 
     public void dispatchState(String name, Function<PlayState, PlayState> dispatch) {
-        Optional.ofNullable(displayMap.get(name)).ifPresent(e -> {
-            VDisplay display = e.getRight();
-            display.dispatchState(dispatch.apply(display.fetchState()));
+        Optional.ofNullable(displayNames.get(name))
+                .flatMap(e -> Optional.ofNullable(manager.get(e)))
+                .ifPresent(e -> {
+                    e.dispatchState(dispatch.apply(e.fetchState()));
 
-            MinecraftForge.EVENT_BUS.post(new VideoPatchEvent.Server.SendToClient(VideoPatchOperation.UPDATE, Collections.singletonList(new VideoPatch(e.getLeft(), display.getQuad(), display.fetchState()))));
-        });
+                    sendToClient(VideoPatchOperation.UPDATE, Collections.singletonList(new VideoPatch(e.getUUID(), e.getQuad(), e.fetchState())));
+                });
     }
 
     public void setQuad(String name, @Nullable Quad quad) {
-        Optional.ofNullable(displayMap.get(name)).ifPresent(e -> {
-            VDisplay display = e.getRight();
-            display.setQuad(quad);
+        Optional.ofNullable(displayNames.get(name))
+                .flatMap(e -> Optional.ofNullable(manager.get(e)))
+                .ifPresent(e -> {
+                    e.setQuad(quad);
 
-            MinecraftForge.EVENT_BUS.post(new VideoPatchEvent.Server.SendToClient(VideoPatchOperation.UPDATE, Collections.singletonList(new VideoPatch(e.getLeft(), display.getQuad(), display.fetchState()))));
-        });
+                    sendToClient(VideoPatchOperation.UPDATE, Collections.singletonList(new VideoPatch(e.getUUID(), e.getQuad(), e.fetchState())));
+                });
     }
 
-    public List<String> list() {
-        return new ArrayList<>(displayMap.keySet());
+    public List<String> listNames() {
+        return new ArrayList<>(displayNames.keySet());
     }
 
-    public Map<String, Pair<UUID, VDisplay>> getMap() {
-        return displayMap;
+    @Override
+    public List<VDisplay> list() {
+        return manager.list();
     }
 
     // WorldSavedData methods

@@ -9,7 +9,6 @@ import net.kunmc.lab.vplayer.patch.VideoPatch;
 import net.kunmc.lab.vplayer.patch.VideoPatchEvent;
 import net.kunmc.lab.vplayer.patch.VideoPatchOperation;
 import net.kunmc.lab.vplayer.world.WDisplaySaveData;
-import net.minecraft.client.Minecraft;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.entity.player.PlayerEntity;
@@ -60,7 +59,6 @@ public class PCommon {
     public void onServerPatchReceive(VideoPatchEvent.Server.ReceiveFromClient event) {
         WDisplaySaveData state = WDisplaySaveData.get(server.getWorld(DimensionType.OVERWORLD));
 
-        state.
     }
 
     @SubscribeEvent
@@ -69,7 +67,7 @@ public class PCommon {
         if (!(player instanceof ServerPlayerEntity))
             return;
         WDisplaySaveData state = WDisplaySaveData.get(server.getWorld(DimensionType.OVERWORLD));
-        PacketContainer packet = new PacketContainer(VideoPatchOperation.SYNC, state.getMap().values().stream().map(p -> new VideoPatch(p.getLeft(), p.getRight().getQuad(), p.getRight().fetchState())).collect(Collectors.toList()));
+        PacketContainer packet = new PacketContainer(VideoPatchOperation.SYNC, state.list().stream().map(p -> new VideoPatch(p.getUUID(), p.getQuad(), p.fetchState())).collect(Collectors.toList()));
         PacketDispatcher.INSTANCE.send(((ServerPlayerEntity) player).connection.getNetworkManager(), packet);
     }
 
@@ -83,7 +81,7 @@ public class PCommon {
                                 .suggests((ctx, builder) -> {
                                     WDisplaySaveData state = WDisplaySaveData.get(server.getWorld(DimensionType.OVERWORLD));
 
-                                    state.list().forEach(builder::suggest);
+                                    state.listNames().forEach(builder::suggest);
 
                                     return builder.buildFuture();
                                 })
@@ -193,7 +191,7 @@ public class PCommon {
                         .executes(ctx -> {
                             WDisplaySaveData state = WDisplaySaveData.get(server.getWorld(DimensionType.OVERWORLD));
 
-                            ctx.getSource().sendFeedback(TextComponentUtils.makeList(state.list(), StringTextComponent::new), true);
+                            ctx.getSource().sendFeedback(TextComponentUtils.makeList(state.listNames(), StringTextComponent::new), true);
 
                             return Command.SINGLE_SUCCESS;
                         })
