@@ -1,4 +1,4 @@
-package net.kunmc.lab.vplayer.network;
+package net.kunmc.lab.vplayer.data;
 
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;

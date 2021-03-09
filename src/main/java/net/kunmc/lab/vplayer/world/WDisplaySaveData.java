@@ -1,5 +1,6 @@
 package net.kunmc.lab.vplayer.world;
 
+import net.kunmc.lab.vplayer.data.DataSerializer;
 import net.kunmc.lab.vplayer.model.DisplayManagaer;
 import net.kunmc.lab.vplayer.model.PlayState;
 import net.kunmc.lab.vplayer.model.Quad;
@@ -9,10 +10,13 @@ import net.kunmc.lab.vplayer.patch.VideoPatchOperation;
 import net.kunmc.lab.vplayer.video.VDisplay;
 import net.kunmc.lab.vplayer.video.VDisplayManager;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.INBT;
+import net.minecraft.nbt.ListNBT;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraft.world.storage.DimensionSavedDataManager;
 import net.minecraft.world.storage.WorldSavedData;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.util.Constants;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -38,12 +42,39 @@ public class WDisplaySaveData extends WorldSavedData implements DisplayManagaer<
 
     @Override
     public void read(CompoundNBT nbt) {
+        clear();
 
+        ListNBT list = nbt.getList("displays", Constants.NBT.TAG_COMPOUND);
+        list.forEach(node -> {
+            if (node.getType() != CompoundNBT.TYPE)
+                return;
+            CompoundNBT tag = (CompoundNBT) node;
+            String name = tag.getString("name");
+            String data = tag.getString("data");
+            if (name.isEmpty() || data.isEmpty())
+                return;
+            VideoPatch patch = DataSerializer.decode(data, VideoPatch.class);
+            if (patch == null)
+                return;
+            displayNames.put(name, patch.getId());
+            VDisplay display = manager.create(patch.getId());
+            display.setQuad(patch.getQuad());
+            display.dispatchState(patch.getState());
+        });
     }
 
     @Override
-    public CompoundNBT write(CompoundNBT compound) {
-        return null;
+    public CompoundNBT write(CompoundNBT nbt) {
+        ListNBT list = nbt.getList("displays", Constants.NBT.TAG_COMPOUND);
+        displayNames.forEach((name, id) -> {
+            Optional.ofNullable(manager.get(id)).ifPresent(d -> {
+                CompoundNBT tag = new CompoundNBT();
+                tag.putString("name", name);
+                tag.putString("data", DataSerializer.encode(new VideoPatch(d.getUUID(), d.getQuad(), d.fetchState())));
+                list.add(tag);
+            });
+        });
+        return nbt;
     }
 
     private void sendToClient(VideoPatchOperation operation, List<VideoPatch> patches) {
