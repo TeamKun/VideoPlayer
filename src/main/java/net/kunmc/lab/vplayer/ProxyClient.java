@@ -1,4 +1,4 @@
-package net.kunmc.lab.vplayer.client;
+package net.kunmc.lab.vplayer;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.kunmc.lab.vplayer.client.mpv.MPlayer;
@@ -11,7 +11,6 @@ import net.kunmc.lab.vplayer.common.network.PacketContainer;
 import net.kunmc.lab.vplayer.common.patch.VideoPatch;
 import net.kunmc.lab.vplayer.common.patch.VideoPatchOperation;
 import net.kunmc.lab.vplayer.common.util.Timer;
-import net.kunmc.lab.vplayer.server.ProxyServer;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;

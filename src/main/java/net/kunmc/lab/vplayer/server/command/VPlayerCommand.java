@@ -5,7 +5,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.kunmc.lab.vplayer.common.model.Quad;
-import net.kunmc.lab.vplayer.server.ProxyServer;
+import net.kunmc.lab.vplayer.ProxyServer;
 import net.kunmc.lab.vplayer.server.video.VDisplayManagerServer;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;

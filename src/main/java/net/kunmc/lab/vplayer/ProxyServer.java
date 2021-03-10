@@ -1,4 +1,4 @@
-package net.kunmc.lab.vplayer.server;
+package net.kunmc.lab.vplayer;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Table;

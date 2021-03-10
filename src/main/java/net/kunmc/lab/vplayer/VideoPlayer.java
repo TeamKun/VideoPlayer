@@ -1,7 +1,5 @@
 package net.kunmc.lab.vplayer;
 
-import net.kunmc.lab.vplayer.client.ProxyClient;
-import net.kunmc.lab.vplayer.server.ProxyServer;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
 import org.apache.logging.log4j.LogManager;
