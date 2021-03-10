@@ -10,7 +10,6 @@ import net.kunmc.lab.vplayer.patch.VideoPatchOperation;
 import net.kunmc.lab.vplayer.video.VDisplay;
 import net.kunmc.lab.vplayer.video.VDisplayManager;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.INBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraft.world.storage.DimensionSavedDataManager;
@@ -38,6 +37,12 @@ public class WDisplaySaveData extends WorldSavedData implements DisplayManagaer<
 
     public WDisplaySaveData(String s) {
         super(s);
+    }
+
+    @Override
+    public boolean isDirty() {
+        // This is true for every save because play position is changed every seconds.
+        return true;
     }
 
     @Override
@@ -74,6 +79,7 @@ public class WDisplaySaveData extends WorldSavedData implements DisplayManagaer<
                 list.add(tag);
             });
         });
+        nbt.put("displays", list);
         return nbt;
     }
 
