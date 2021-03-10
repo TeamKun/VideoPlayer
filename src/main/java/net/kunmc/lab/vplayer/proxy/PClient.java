@@ -2,16 +2,17 @@ package net.kunmc.lab.vplayer.proxy;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.kunmc.lab.vplayer.client.mpv.MPlayer;
+import net.kunmc.lab.vplayer.client.network.PacketDispatcherClient;
+import net.kunmc.lab.vplayer.client.patch.VideoPatchRecieveEventClient;
+import net.kunmc.lab.vplayer.client.patch.VideoPatchSendEventClient;
 import net.kunmc.lab.vplayer.client.video.VDisplayManagerClient;
-import net.kunmc.lab.vplayer.model.Display;
-import net.kunmc.lab.vplayer.model.PlayState;
-import net.kunmc.lab.vplayer.model.Quad;
-import net.kunmc.lab.vplayer.network.PacketContainer;
-import net.kunmc.lab.vplayer.network.PacketDispatcher;
-import net.kunmc.lab.vplayer.patch.VideoPatch;
-import net.kunmc.lab.vplayer.patch.VideoPatchEvent;
-import net.kunmc.lab.vplayer.patch.VideoPatchOperation;
-import net.kunmc.lab.vplayer.util.Timer;
+import net.kunmc.lab.vplayer.common.model.Display;
+import net.kunmc.lab.vplayer.common.model.PlayState;
+import net.kunmc.lab.vplayer.common.model.Quad;
+import net.kunmc.lab.vplayer.common.network.PacketContainer;
+import net.kunmc.lab.vplayer.common.patch.VideoPatch;
+import net.kunmc.lab.vplayer.common.patch.VideoPatchOperation;
+import net.kunmc.lab.vplayer.common.util.Timer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.util.math.Vec3d;
@@ -29,6 +30,14 @@ import java.util.UUID;
 public class PClient extends PCommon {
 
     private final VDisplayManagerClient manager = new VDisplayManagerClient();
+
+    @Override
+    public void registerEvents() {
+        super.registerEvents();
+
+        // Packet
+        PacketDispatcherClient.register();
+    }
 
     @SubscribeEvent
     public void doClientStuff(final FMLClientSetupEvent ev) {
@@ -48,16 +57,16 @@ public class PClient extends PCommon {
     }
 
     @SubscribeEvent
-    public void onClientPatchSend(VideoPatchEvent.Client.SendToServer event) {
+    public void onClientPatchSend(VideoPatchSendEventClient event) {
         if (Minecraft.getInstance().getConnection() == null)
             return;
 
         PacketContainer packet = new PacketContainer(event.getOperation(), event.getPatches());
-        PacketDispatcher.INSTANCE.sendToServer(packet);
+        PacketDispatcherClient.sendToServer(packet);
     }
 
     @SubscribeEvent
-    public void onClientPatchReceive(VideoPatchEvent.Client.ReceiveFromServer event) {
+    public void onClientPatchReceive(VideoPatchRecieveEventClient event) {
         VideoPatchOperation op = event.getOperation();
         List<VideoPatch> patches = event.getPatches();
 

@@ -4,8 +4,8 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ptr.DoubleByReference;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.LongByReference;
-import net.kunmc.lab.vplayer.util.EventDispatcher;
-import net.kunmc.lab.vplayer.util.RepeatObservable;
+import net.kunmc.lab.vplayer.common.util.EventDispatcher;
+import net.kunmc.lab.vplayer.common.util.RepeatObservable;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.concurrent.CompletableFuture;

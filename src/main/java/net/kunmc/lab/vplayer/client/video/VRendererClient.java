@@ -3,7 +3,7 @@ package net.kunmc.lab.vplayer.client.video;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.kunmc.lab.vplayer.VideoPlayer;
-import net.kunmc.lab.vplayer.model.Quad;
+import net.kunmc.lab.vplayer.common.model.Quad;
 import net.minecraft.client.GameSettings;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.*;

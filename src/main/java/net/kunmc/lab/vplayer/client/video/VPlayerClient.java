@@ -3,22 +3,20 @@ package net.kunmc.lab.vplayer.client.video;
 import com.google.common.base.Suppliers;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.kunmc.lab.vplayer.client.mpv.MPlayerInstance;
-import net.kunmc.lab.vplayer.model.Quad;
-import net.kunmc.lab.vplayer.util.RepeatObservable;
-import net.kunmc.lab.vplayer.video.VController;
-import net.kunmc.lab.vplayer.video.VEventHandler;
+import net.kunmc.lab.vplayer.common.model.Quad;
+import net.kunmc.lab.vplayer.common.util.RepeatObservable;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
-public class VPlayerClient implements VEventHandler {
+public class VPlayerClient implements VEventHandlerClient {
     private final MPlayerInstance playerClient;
     private final VRendererClient renderer;
     private boolean started;
 
     private final RepeatObservable<Void> onLoaded = new RepeatObservable<>();
 
-    private VController controller = new VController() {
+    private VControllerClient controller = new VControllerClient() {
         private final Supplier<RepeatObservable<Double>> duration = Suppliers.memoize(
                 () -> VPlayerClient.this.playerClient.getDispatchers().dispatcherPropertyChange.observeAsyncDouble("duration"));
         private final Supplier<RepeatObservable<Boolean>> pause = Suppliers.memoize(
@@ -78,7 +76,7 @@ public class VPlayerClient implements VEventHandler {
         playerClient.updateFbo(1920, 1080);
     }
 
-    public VController getController() {
+    public VControllerClient getController() {
         return controller;
     }
 

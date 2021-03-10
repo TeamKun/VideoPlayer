@@ -1,8 +1,8 @@
 package net.kunmc.lab.vplayer.client.video;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
-import net.kunmc.lab.vplayer.model.DisplayManagaer;
-import net.kunmc.lab.vplayer.video.LifecycleDisplay;
+import net.kunmc.lab.vplayer.common.model.DisplayManagaer;
+import net.kunmc.lab.vplayer.common.model.LifecycleDisplay;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;

@@ -1,11 +1,10 @@
 package net.kunmc.lab.vplayer.client.video;
 
-import net.kunmc.lab.vplayer.model.PlayState;
-import net.kunmc.lab.vplayer.patch.VideoPatch;
-import net.kunmc.lab.vplayer.patch.VideoPatchEvent;
-import net.kunmc.lab.vplayer.patch.VideoPatchOperation;
-import net.kunmc.lab.vplayer.video.VController;
-import net.kunmc.lab.vplayer.video.VPlayStateStore;
+import net.kunmc.lab.vplayer.client.patch.VideoPatchSendEventClient;
+import net.kunmc.lab.vplayer.common.model.PlayState;
+import net.kunmc.lab.vplayer.common.patch.VideoPatch;
+import net.kunmc.lab.vplayer.common.patch.VideoPatchOperation;
+import net.kunmc.lab.vplayer.common.video.VPlayStateStore;
 import net.minecraftforge.common.MinecraftForge;
 
 import java.util.Collections;
@@ -14,7 +13,7 @@ import java.util.concurrent.CompletableFuture;
 
 public class VPlayStateStoreClient extends VPlayStateStore {
     public void reapply(VDisplayClient display) {
-        VController controller = display.getController();
+        VControllerClient controller = display.getController();
         controller.setFile(file).thenRun(() -> {
             controller.setTime(timer.getTime());
             controller.setPaused(paused);
@@ -22,7 +21,7 @@ public class VPlayStateStoreClient extends VPlayStateStore {
     }
 
     public void dispatch(VDisplayClient display, PlayState action) {
-        VController controller = display.getController();
+        VControllerClient controller = display.getController();
         CompletableFuture<Void> fileFuture = CompletableFuture.completedFuture(null);
         if (!Objects.equals(file, action.file)) {
             file = action.file;
@@ -47,7 +46,7 @@ public class VPlayStateStoreClient extends VPlayStateStore {
             if (d != null) {
                 duration = (float) (double) d;
 
-                MinecraftForge.EVENT_BUS.post(new VideoPatchEvent.Client.SendToServer(VideoPatchOperation.UPDATE,
+                MinecraftForge.EVENT_BUS.post(new VideoPatchSendEventClient(VideoPatchOperation.UPDATE,
                         Collections.singletonList(new VideoPatch(display.getUUID(), display.getQuad(), fetch()))));
             }
         });

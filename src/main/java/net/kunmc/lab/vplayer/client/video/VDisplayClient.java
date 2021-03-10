@@ -1,9 +1,8 @@
 package net.kunmc.lab.vplayer.client.video;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
-import net.kunmc.lab.vplayer.model.PlayState;
-import net.kunmc.lab.vplayer.video.VController;
-import net.kunmc.lab.vplayer.video.VDisplayAbstract;
+import net.kunmc.lab.vplayer.common.model.PlayState;
+import net.kunmc.lab.vplayer.common.video.VDisplayAbstract;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.util.math.Vec3d;
@@ -76,7 +75,7 @@ public class VDisplayClient extends VDisplayAbstract {
         destroyRequested = true;
     }
 
-    public VController getController() {
+    public VControllerClient getController() {
         return client.getController();
     }
 

@@ -3,7 +3,7 @@ package net.kunmc.lab.vplayer.client.mpv;
 import com.sun.jna.Memory;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.PointerByReference;
-import net.kunmc.lab.vplayer.video.VEventHandler;
+import net.kunmc.lab.vplayer.client.video.VEventHandlerClient;
 
 import static net.kunmc.lab.vplayer.client.mpv.MPlayer.get_proc_address;
 import static net.kunmc.lab.vplayer.client.mpv.MPlayer.*;
@@ -49,7 +49,7 @@ public class MPlayerInstance {
         return dispatchers;
     }
 
-    public void renderFrame(VEventHandler handler) {
+    public void renderFrame(VEventHandlerClient handler) {
         renderMpv(handler);
 
         mpv.mpv_render_context_report_swap(mpv_gl.getValue());
@@ -65,7 +65,7 @@ public class MPlayerInstance {
         mpv.mpv_terminate_destroy(handle);
     }
 
-    private void renderMpv(VEventHandler handler) {
+    private void renderMpv(VEventHandlerClient handler) {
         if (redraw) {
             redraw = false;
 
@@ -83,7 +83,7 @@ public class MPlayerInstance {
         // glDebugMessageInsert(GL_DEBUG_SOURCE_APPLICATION, GL_DEBUG_TYPE_MARKER, 1919810, GL_DEBUG_SEVERITY_HIGH, "MPV Render End");
     }
 
-    public void processEvent(VEventHandler handler) {
+    public void processEvent(VEventHandlerClient handler) {
         if (volumeChanged) {
             volumeChanged = false;
             dispatchers.dispatcherPropertySet.setPropertyAsyncDouble("volume", volume).thenRun(() -> volumeChanged = true);

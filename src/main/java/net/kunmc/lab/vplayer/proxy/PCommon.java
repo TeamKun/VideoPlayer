@@ -5,15 +5,16 @@ import com.google.common.collect.Table;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
-import net.kunmc.lab.vplayer.model.PlayState;
-import net.kunmc.lab.vplayer.model.Quad;
-import net.kunmc.lab.vplayer.network.PacketContainer;
-import net.kunmc.lab.vplayer.network.PacketDispatcher;
-import net.kunmc.lab.vplayer.patch.VideoPatch;
-import net.kunmc.lab.vplayer.patch.VideoPatchEvent;
-import net.kunmc.lab.vplayer.patch.VideoPatchOperation;
-import net.kunmc.lab.vplayer.util.Timer;
-import net.kunmc.lab.vplayer.world.WDisplaySaveData;
+import net.kunmc.lab.vplayer.common.model.PlayState;
+import net.kunmc.lab.vplayer.common.model.Quad;
+import net.kunmc.lab.vplayer.common.network.PacketContainer;
+import net.kunmc.lab.vplayer.common.patch.VideoPatch;
+import net.kunmc.lab.vplayer.common.patch.VideoPatchOperation;
+import net.kunmc.lab.vplayer.common.util.Timer;
+import net.kunmc.lab.vplayer.server.network.PacketDispatcherServer;
+import net.kunmc.lab.vplayer.server.patch.VideoPatchRecieveEventServer;
+import net.kunmc.lab.vplayer.server.patch.VideoPatchSendEventServer;
+import net.kunmc.lab.vplayer.server.video.VDisplayManagerServer;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.entity.player.PlayerEntity;
@@ -48,7 +49,7 @@ public class PCommon {
         MinecraftForge.EVENT_BUS.register(this);
 
         // Packet
-        PacketDispatcher.INSTANCE.register();
+        PacketDispatcherServer.register();
     }
 
     private MinecraftServer server;
@@ -60,7 +61,7 @@ public class PCommon {
     }
 
     @SubscribeEvent
-    public void onServerPatchSend(VideoPatchEvent.Server.SendToClient event) {
+    public void onServerPatchSend(VideoPatchSendEventServer event) {
         if (server == null)
             return;
 
@@ -68,12 +69,12 @@ public class PCommon {
         server.getPlayerList().getPlayers().stream()
                 .map(p -> p.connection)
                 .filter(Objects::nonNull)
-                .forEach(p -> PacketDispatcher.INSTANCE.send(p.getNetworkManager(), packet));
+                .forEach(p -> PacketDispatcherServer.send(p.getNetworkManager(), packet));
     }
 
     @SubscribeEvent
-    public void onServerPatchReceive(VideoPatchEvent.Server.ReceiveFromClient event) {
-        WDisplaySaveData state = WDisplaySaveData.get(server.getWorld(DimensionType.OVERWORLD));
+    public void onServerPatchReceive(VideoPatchRecieveEventServer event) {
+        VDisplayManagerServer state = VDisplayManagerServer.get(server.getWorld(DimensionType.OVERWORLD));
 
         if (event.getOperation() == VideoPatchOperation.UPDATE) {
             event.getPatches().forEach(e -> {
@@ -109,9 +110,9 @@ public class PCommon {
         PlayerEntity player = event.getPlayer();
         if (!(player instanceof ServerPlayerEntity))
             return;
-        WDisplaySaveData state = WDisplaySaveData.get(server.getWorld(DimensionType.OVERWORLD));
+        VDisplayManagerServer state = VDisplayManagerServer.get(server.getWorld(DimensionType.OVERWORLD));
         PacketContainer packet = new PacketContainer(VideoPatchOperation.SYNC, state.list().stream().map(p -> new VideoPatch(p.getUUID(), p.getQuad(), p.fetchState())).collect(Collectors.toList()));
-        PacketDispatcher.INSTANCE.send(((ServerPlayerEntity) player).connection.getNetworkManager(), packet);
+        PacketDispatcherServer.send(((ServerPlayerEntity) player).connection.getNetworkManager(), packet);
     }
 
     @SubscribeEvent
@@ -122,7 +123,7 @@ public class PCommon {
                 Commands.literal("vplayer")
                         .then(Commands.argument("name", StringArgumentType.word())
                                 .suggests((ctx, builder) -> {
-                                    WDisplaySaveData state = WDisplaySaveData.get(server.getWorld(DimensionType.OVERWORLD));
+                                    VDisplayManagerServer state = VDisplayManagerServer.get(server.getWorld(DimensionType.OVERWORLD));
 
                                     state.listNames().forEach(builder::suggest);
 
@@ -132,7 +133,7 @@ public class PCommon {
                                         .executes(ctx -> {
                                             String name = StringArgumentType.getString(ctx, "name");
 
-                                            WDisplaySaveData state = WDisplaySaveData.get(server.getWorld(DimensionType.OVERWORLD));
+                                            VDisplayManagerServer state = VDisplayManagerServer.get(server.getWorld(DimensionType.OVERWORLD));
                                             state.create(name);
 
                                             CommandSource player = ctx.getSource();
@@ -157,7 +158,7 @@ public class PCommon {
                                         .executes(ctx -> {
                                             String name = StringArgumentType.getString(ctx, "name");
 
-                                            WDisplaySaveData state = WDisplaySaveData.get(server.getWorld(DimensionType.OVERWORLD));
+                                            VDisplayManagerServer state = VDisplayManagerServer.get(server.getWorld(DimensionType.OVERWORLD));
 
                                             CommandSource player = ctx.getSource();
                                             Vec3d pos = player.getPos();
@@ -183,7 +184,7 @@ public class PCommon {
                                                     String name = StringArgumentType.getString(ctx, "name");
                                                     String url = StringArgumentType.getString(ctx, "url");
 
-                                                    WDisplaySaveData state = WDisplaySaveData.get(server.getWorld(DimensionType.OVERWORLD));
+                                                    VDisplayManagerServer state = VDisplayManagerServer.get(server.getWorld(DimensionType.OVERWORLD));
                                                     state.dispatchState(name, s -> {
                                                         s.file = url;
                                                         s.paused = true;
@@ -198,7 +199,7 @@ public class PCommon {
                                         .executes(ctx -> {
                                             String name = StringArgumentType.getString(ctx, "name");
 
-                                            WDisplaySaveData state = WDisplaySaveData.get(server.getWorld(DimensionType.OVERWORLD));
+                                            VDisplayManagerServer state = VDisplayManagerServer.get(server.getWorld(DimensionType.OVERWORLD));
                                             state.dispatchState(name, s -> {
                                                 if (s.duration > 0 && s.time > s.duration)
                                                     s.time = 0;
@@ -213,7 +214,7 @@ public class PCommon {
                                         .executes(ctx -> {
                                             String name = StringArgumentType.getString(ctx, "name");
 
-                                            WDisplaySaveData state = WDisplaySaveData.get(server.getWorld(DimensionType.OVERWORLD));
+                                            VDisplayManagerServer state = VDisplayManagerServer.get(server.getWorld(DimensionType.OVERWORLD));
                                             state.dispatchState(name, s -> {
                                                 s.paused = true;
                                                 return s;
@@ -228,7 +229,7 @@ public class PCommon {
                                                     String name = StringArgumentType.getString(ctx, "name");
                                                     float sec = FloatArgumentType.getFloat(ctx, "sec");
 
-                                                    WDisplaySaveData state = WDisplaySaveData.get(server.getWorld(DimensionType.OVERWORLD));
+                                                    VDisplayManagerServer state = VDisplayManagerServer.get(server.getWorld(DimensionType.OVERWORLD));
                                                     state.dispatchState(name, s -> {
                                                         if (s.duration > 0)
                                                             s.time = MathHelper.clamp(MathHelper.clamp(s.time, 0, s.duration) + sec, 0, s.duration);
@@ -248,7 +249,7 @@ public class PCommon {
                                                             String name = StringArgumentType.getString(ctx, "name");
                                                             float per = FloatArgumentType.getFloat(ctx, "%");
 
-                                                            WDisplaySaveData state = WDisplaySaveData.get(server.getWorld(DimensionType.OVERWORLD));
+                                                            VDisplayManagerServer state = VDisplayManagerServer.get(server.getWorld(DimensionType.OVERWORLD));
                                                             state.dispatchState(name, s -> {
                                                                 if (s.duration > 0)
                                                                     s.time = s.duration * per / 100f;
@@ -265,7 +266,7 @@ public class PCommon {
                                                             String name = StringArgumentType.getString(ctx, "name");
                                                             float sec = FloatArgumentType.getFloat(ctx, "sec");
 
-                                                            WDisplaySaveData state = WDisplaySaveData.get(server.getWorld(DimensionType.OVERWORLD));
+                                                            VDisplayManagerServer state = VDisplayManagerServer.get(server.getWorld(DimensionType.OVERWORLD));
                                                             state.dispatchState(name, s -> {
                                                                 if (s.duration > 0)
                                                                     s.time = MathHelper.clamp(sec, 0, s.duration);
@@ -283,7 +284,7 @@ public class PCommon {
                                         .executes(ctx -> {
                                             String name = StringArgumentType.getString(ctx, "name");
 
-                                            WDisplaySaveData state = WDisplaySaveData.get(server.getWorld(DimensionType.OVERWORLD));
+                                            VDisplayManagerServer state = VDisplayManagerServer.get(server.getWorld(DimensionType.OVERWORLD));
                                             state.destroy(name);
 
                                             return Command.SINGLE_SUCCESS;
@@ -291,7 +292,7 @@ public class PCommon {
                                 )
                         )
                         .executes(ctx -> {
-                            WDisplaySaveData state = WDisplaySaveData.get(server.getWorld(DimensionType.OVERWORLD));
+                            VDisplayManagerServer state = VDisplayManagerServer.get(server.getWorld(DimensionType.OVERWORLD));
 
                             ctx.getSource().sendFeedback(TextComponentUtils.makeList(state.listNames(), StringTextComponent::new), true);
 
