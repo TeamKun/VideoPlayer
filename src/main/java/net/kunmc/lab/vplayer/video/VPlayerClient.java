@@ -14,6 +14,8 @@ public class VPlayerClient implements VEventHandler {
     private final VRenderer renderer;
     private boolean started;
 
+    private final RepeatObservable<Void> onLoaded = new RepeatObservable<>();
+
     private VDisplayController controller = new VDisplayController() {
         private final Supplier<RepeatObservable<Double>> duration = Suppliers.memoize(
                 () -> VPlayerClient.this.playerClient.getDispatchers().dispatcherPropertyChange.observeAsyncDouble("duration"));
@@ -54,6 +56,11 @@ public class VPlayerClient implements VEventHandler {
         public RepeatObservable<Boolean> isPauseObserve() {
             return pause.get();
         }
+
+        @Override
+        public RepeatObservable<Void> onLoadObserve() {
+            return onLoaded;
+        }
     };
 
     public VPlayerClient() {
@@ -88,6 +95,11 @@ public class VPlayerClient implements VEventHandler {
     @Override
     public void onBeforeRender() {
         started = true;
+    }
+
+    @Override
+    public void onLoaded() {
+        onLoaded.fire(null);
     }
 
     @Override

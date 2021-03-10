@@ -93,6 +93,7 @@ public class MPlayerClient {
         mpv_event event = MPlayer.mpv.mpv_wait_event(handle, 0);
         switch (event.event_id) {
             case MPV_EVENT_FILE_LOADED: {
+                handler.onLoaded();
             }
             break;
 

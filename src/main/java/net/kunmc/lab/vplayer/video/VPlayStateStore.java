@@ -72,13 +72,8 @@ public class VPlayStateStore {
                         Collections.singletonList(new VideoPatch(display.uuid, display.quad, fetch()))));
             }
         });
-        display.getController().isPauseObserve().thenAccept(p -> {
-            if (p != null)
-                paused = p;
-            display.getController().getTime().thenAccept(t -> {
-                if (t != null)
-                    timer.set((float) (double) t);
-            });
+        display.getController().onLoadObserve().thenAccept(p -> {
+            display.getController().setTime(timer.getTime());
         });
     }
 }

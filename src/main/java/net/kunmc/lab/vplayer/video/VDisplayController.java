@@ -18,4 +18,6 @@ public interface VDisplayController {
     RepeatObservable<Double> getDurationObserve();
 
     RepeatObservable<Boolean> isPauseObserve();
+
+    RepeatObservable<Void> onLoadObserve();
 }

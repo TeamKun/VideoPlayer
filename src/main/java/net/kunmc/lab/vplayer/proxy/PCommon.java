@@ -12,6 +12,7 @@ import net.kunmc.lab.vplayer.network.PacketDispatcher;
 import net.kunmc.lab.vplayer.patch.VideoPatch;
 import net.kunmc.lab.vplayer.patch.VideoPatchEvent;
 import net.kunmc.lab.vplayer.patch.VideoPatchOperation;
+import net.kunmc.lab.vplayer.util.Timer;
 import net.kunmc.lab.vplayer.world.WDisplaySaveData;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
@@ -24,6 +25,7 @@ import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextComponentUtils;
 import net.minecraft.world.dimension.DimensionType;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
@@ -51,6 +53,11 @@ public class PCommon {
 
     private MinecraftServer server;
     private Table<UUID, UUID, Double> durationTable = HashBasedTable.create();
+
+    @SubscribeEvent
+    public void onTick(TickEvent.ServerTickEvent event) {
+        Timer.tick();
+    }
 
     @SubscribeEvent
     public void onServerPatchSend(VideoPatchEvent.Server.SendToClient event) {
