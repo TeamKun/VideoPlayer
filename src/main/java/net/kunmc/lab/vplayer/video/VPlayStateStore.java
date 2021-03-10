@@ -1,21 +1,13 @@
 package net.kunmc.lab.vplayer.video;
 
 import net.kunmc.lab.vplayer.model.PlayState;
-import net.kunmc.lab.vplayer.patch.VideoPatch;
-import net.kunmc.lab.vplayer.patch.VideoPatchEvent;
-import net.kunmc.lab.vplayer.patch.VideoPatchOperation;
 import net.kunmc.lab.vplayer.util.Timer;
-import net.minecraftforge.common.MinecraftForge;
-
-import java.util.Collections;
-import java.util.Objects;
-import java.util.concurrent.CompletableFuture;
 
 public class VPlayStateStore {
-    private String file;
-    private final Timer timer = Timer.createUnstarted();
-    private boolean paused;
-    private float duration = -1;
+    protected String file;
+    protected final Timer timer = Timer.createUnstarted();
+    protected boolean paused;
+    protected float duration = -1;
 
     public PlayState fetch() {
         PlayState state = new PlayState();
@@ -34,46 +26,4 @@ public class VPlayStateStore {
         duration = action.duration;
     }
 
-    public void reapply(VDisplayClient display) {
-        VDisplayController controller = display.getController();
-        controller.setFile(file).thenRun(() -> {
-            controller.setTime(timer.getTime());
-            controller.setPaused(paused);
-        });
-    }
-
-    public void dispatch(VDisplayClient display, PlayState action) {
-        VDisplayController controller = display.getController();
-        CompletableFuture<Void> fileFuture = CompletableFuture.completedFuture(null);
-        if (!Objects.equals(file, action.file)) {
-            file = action.file;
-            fileFuture = controller.setFile(action.file);
-        }
-        fileFuture.thenRun(() -> {
-            {
-                timer.set(action.time);
-                controller.setTime(timer.getTime());
-            }
-            {
-                paused = action.paused;
-                timer.setPaused(paused);
-                controller.setPaused(paused);
-            }
-            duration = action.duration;
-        });
-    }
-
-    public void observe(VDisplayClient display) {
-        display.getController().getDurationObserve().thenAccept(d -> {
-            if (d != null) {
-                duration = (float) (double) d;
-
-                MinecraftForge.EVENT_BUS.post(new VideoPatchEvent.Client.SendToServer(VideoPatchOperation.UPDATE,
-                        Collections.singletonList(new VideoPatch(display.uuid, display.quad, fetch()))));
-            }
-        });
-        display.getController().onLoadObserve().thenAccept(p -> {
-            display.getController().setTime(timer.getTime());
-        });
-    }
 }

@@ -1,21 +1,24 @@
-package net.kunmc.lab.vplayer.video;
+package net.kunmc.lab.vplayer.client.video;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.kunmc.lab.vplayer.model.PlayState;
+import net.kunmc.lab.vplayer.video.VController;
+import net.kunmc.lab.vplayer.video.VDisplayAbstract;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.util.math.Vec3d;
 
 import java.util.UUID;
 
-public class VDisplayClient extends VDisplay {
+public class VDisplayClient extends VDisplayAbstract {
 
+    protected final VPlayStateStoreClient playStateStore = new VPlayStateStoreClient();
     private VRequestedState requestedState = VRequestedState.VALIDATE;
     private VPlayerClient client;
     private PlayState playStateQueue;
 
-    public VDisplayClient(UUID uuid) {
-        super(uuid);
+    public VDisplayClient(UUID uuidIn) {
+        super(uuidIn);
     }
 
     @Override
@@ -73,7 +76,7 @@ public class VDisplayClient extends VDisplay {
         destroyRequested = true;
     }
 
-    public VDisplayController getController() {
+    public VController getController() {
         return client.getController();
     }
 
@@ -104,4 +107,9 @@ public class VDisplayClient extends VDisplay {
         }
     }
 
+    private enum VRequestedState {
+        NONE,
+        VALIDATE,
+        INVALIDATE,
+    }
 }

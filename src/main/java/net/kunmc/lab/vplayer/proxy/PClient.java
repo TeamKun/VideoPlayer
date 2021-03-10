@@ -1,17 +1,17 @@
 package net.kunmc.lab.vplayer.proxy;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
+import net.kunmc.lab.vplayer.client.mpv.MPlayer;
+import net.kunmc.lab.vplayer.client.video.VDisplayManagerClient;
+import net.kunmc.lab.vplayer.model.Display;
 import net.kunmc.lab.vplayer.model.PlayState;
 import net.kunmc.lab.vplayer.model.Quad;
-import net.kunmc.lab.vplayer.mpv.MPlayer;
 import net.kunmc.lab.vplayer.network.PacketContainer;
 import net.kunmc.lab.vplayer.network.PacketDispatcher;
 import net.kunmc.lab.vplayer.patch.VideoPatch;
 import net.kunmc.lab.vplayer.patch.VideoPatchEvent;
 import net.kunmc.lab.vplayer.patch.VideoPatchOperation;
 import net.kunmc.lab.vplayer.util.Timer;
-import net.kunmc.lab.vplayer.video.VDisplay;
-import net.kunmc.lab.vplayer.video.VDisplayManagerClient;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.player.ClientPlayerEntity;
 import net.minecraft.util.math.Vec3d;
@@ -65,14 +65,14 @@ public class PClient extends PCommon {
             case SYNC:
                 manager.clear();
                 patches.forEach(p -> {
-                    VDisplay display = manager.create(p.getId());
+                    Display display = manager.create(p.getId());
                     display.setQuad(p.getQuad());
                     Optional.ofNullable(p.getState()).ifPresent(display::dispatchState);
                 });
                 break;
             case UPDATE:
                 patches.forEach(p -> {
-                    VDisplay display = manager.computeIfAbsent(p.getId());
+                    Display display = manager.computeIfAbsent(p.getId());
                     display.setQuad(p.getQuad());
                     Optional.ofNullable(p.getState()).ifPresent(display::dispatchState);
                 });
@@ -94,7 +94,7 @@ public class PClient extends PCommon {
             if (player != null) {
                 Vec3d pos = player.getPositionVec();
 
-                VDisplay display = manager.create(UUID.randomUUID());
+                Display display = manager.create(UUID.randomUUID());
                 display.setQuad(new Quad(
                         player.dimension,
                         pos.add(0, 9, 0),

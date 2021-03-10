@@ -4,7 +4,7 @@ import net.kunmc.lab.vplayer.util.RepeatObservable;
 
 import java.util.concurrent.CompletableFuture;
 
-public interface VDisplayController {
+public interface VController {
     CompletableFuture<Void> setFile(String file);
 
     CompletableFuture<Void> setTime(double time);

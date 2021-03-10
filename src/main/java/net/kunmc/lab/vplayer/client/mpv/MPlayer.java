@@ -1,4 +1,4 @@
-package net.kunmc.lab.vplayer.mpv;
+package net.kunmc.lab.vplayer.client.mpv;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;

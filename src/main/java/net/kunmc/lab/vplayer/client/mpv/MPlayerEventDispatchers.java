@@ -1,4 +1,4 @@
-package net.kunmc.lab.vplayer.mpv;
+package net.kunmc.lab.vplayer.client.mpv;
 
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.DoubleByReference;
@@ -10,7 +10,7 @@ import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.concurrent.CompletableFuture;
 
-import static net.kunmc.lab.vplayer.mpv.MpvLibrary.mpv_format.*;
+import static net.kunmc.lab.vplayer.client.mpv.MpvLibrary.mpv_format.*;
 
 public class MPlayerEventDispatchers {
     private final long handle;

@@ -8,7 +8,7 @@ import net.kunmc.lab.vplayer.patch.VideoPatch;
 import net.kunmc.lab.vplayer.patch.VideoPatchEvent;
 import net.kunmc.lab.vplayer.patch.VideoPatchOperation;
 import net.kunmc.lab.vplayer.video.VDisplay;
-import net.kunmc.lab.vplayer.video.VDisplayManager;
+import net.kunmc.lab.vplayer.video.VManager;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.world.server.ServerWorld;
@@ -28,7 +28,7 @@ public class WDisplaySaveData extends WorldSavedData implements DisplayManagaer<
     private static final String DATA_NAME = MODID + "_displays";
 
     private final Map<String, UUID> displayNames = new ConcurrentHashMap<>();
-    private final VDisplayManager manager = new VDisplayManager();
+    private final VManager manager = new VManager();
 
     // Required constructors
     public WDisplaySaveData() {

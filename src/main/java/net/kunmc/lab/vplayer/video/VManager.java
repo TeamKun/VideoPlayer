@@ -5,7 +5,7 @@ import net.kunmc.lab.vplayer.model.DisplayManagaer;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class VDisplayManager implements DisplayManagaer<UUID, VDisplay> {
+public class VManager implements DisplayManagaer<UUID, VDisplay> {
     private final Map<UUID, VDisplay> displayMap = new ConcurrentHashMap<>();
 
     @Override

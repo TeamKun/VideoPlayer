@@ -1,7 +1,8 @@
-package net.kunmc.lab.vplayer.video;
+package net.kunmc.lab.vplayer.client.video;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.kunmc.lab.vplayer.model.DisplayManagaer;
+import net.kunmc.lab.vplayer.video.LifecycleDisplay;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -14,7 +15,7 @@ public class VDisplayManagerClient implements DisplayManagaer<UUID, VDisplayClie
     @Override
     public VDisplayClient create(UUID uuid) {
         VDisplayClient display = new VDisplayClient(uuid);
-        Optional.ofNullable(displayMap.put(uuid, display)).ifPresent(VDisplay::destroy);
+        Optional.ofNullable(displayMap.put(uuid, display)).ifPresent(LifecycleDisplay::destroy);
         addQueue.add(display);
         return display;
     }
@@ -42,7 +43,7 @@ public class VDisplayManagerClient implements DisplayManagaer<UUID, VDisplayClie
 
     public void render(MatrixStack stack) {
         {
-            VRenderer.beginRenderFrame();
+            VRendererClient.beginRenderFrame();
 
             displays.forEach(display -> {
                 if (display.canSee())
@@ -61,7 +62,7 @@ public class VDisplayManagerClient implements DisplayManagaer<UUID, VDisplayClie
 
             displays.forEach(VDisplayClient::renderFrame);
 
-            VRenderer.endRenderFrame();
+            VRendererClient.endRenderFrame();
         }
 
         displays.forEach(display -> display.render(stack));

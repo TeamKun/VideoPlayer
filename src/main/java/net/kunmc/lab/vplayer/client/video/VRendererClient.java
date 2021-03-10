@@ -1,4 +1,4 @@
-package net.kunmc.lab.vplayer.video;
+package net.kunmc.lab.vplayer.client.video;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -18,7 +18,7 @@ import net.minecraft.util.math.Vec3d;
 import static net.minecraft.client.Minecraft.IS_RUNNING_ON_MAC;
 import static org.lwjgl.opengl.GL11.*;
 
-public class VRenderer {
+public class VRendererClient {
     private Framebuffer framebuffer;
     private ResourceLocation loadingTexture = new ResourceLocation(VideoPlayer.MODID, "textures/loading.png");
     private ResourceLocation gradientTexture = new ResourceLocation(VideoPlayer.MODID, "textures/gradient.png");
