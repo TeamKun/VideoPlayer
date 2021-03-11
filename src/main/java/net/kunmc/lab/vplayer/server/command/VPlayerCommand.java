@@ -4,7 +4,6 @@ import com.google.common.base.Strings;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
-import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -276,17 +275,17 @@ public class VPlayerCommand {
                                         })
                                 )
                                 .then(Commands.literal("seek")
-                                        .then(Commands.argument("sec", FloatArgumentType.floatArg())
+                                        .then(Commands.argument("time", VTimeArgumentType.timeArg())
                                                 .executes(ctx -> {
                                                     String name = StringArgumentType.getString(ctx, "name");
-                                                    float sec = FloatArgumentType.getFloat(ctx, "sec");
+                                                    VTimeArgumentType.VTime time = VTimeArgumentType.getTime(ctx, "time");
 
                                                     VDisplayManagerServer state = ProxyServer.getDisplayManager();
                                                     state.dispatchState(name, s -> {
                                                         if (s.duration > 0)
-                                                            s.time = MathHelper.clamp(MathHelper.clamp(s.time, 0, s.duration) + sec, 0, s.duration);
+                                                            s.time = MathHelper.clamp(MathHelper.clamp(s.time, 0, s.duration) + time.getTime(s.duration), 0, s.duration);
                                                         else
-                                                            s.time += sec;
+                                                            s.time += time.getTime(s.duration);
                                                         return s;
                                                     });
 

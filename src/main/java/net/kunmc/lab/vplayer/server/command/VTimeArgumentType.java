@@ -33,7 +33,7 @@ public class VTimeArgumentType implements ArgumentType<VTimeArgumentType.VTime> 
 
     public VTime parse(StringReader text) throws CommandSyntaxException {
         float f = text.readFloat();
-        if (text.peek() == '%') {
+        if (text.canRead() && text.peek() == '%') {
             text.readStringUntil('%');
             if (f < 0 || f > 100)
                 throw exceptionTickCount.create(f);
@@ -54,8 +54,6 @@ public class VTimeArgumentType implements ArgumentType<VTimeArgumentType.VTime> 
                 else
                     break;
             }
-            if (sec < 0)
-                throw exceptionTickCount.create(sec );
             return new VTime(VTimeType.SECONDS, sec);
         }
     }
