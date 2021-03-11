@@ -4,6 +4,7 @@ import com.mojang.blaze3d.matrix.MatrixStack;
 import net.kunmc.lab.vplayer.common.model.DisplayManagaer;
 import net.kunmc.lab.vplayer.common.model.LifecycleDisplay;
 
+import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -12,6 +13,7 @@ public class VDisplayManagerClient implements DisplayManagaer<UUID, VDisplayClie
     private final Deque<VDisplayClient> addQueue = new ArrayDeque<>();
     private final List<VDisplayClient> displays = new ArrayList<>();
 
+    @Nonnull
     @Override
     public VDisplayClient create(UUID uuid) {
         VDisplayClient display = new VDisplayClient(uuid);

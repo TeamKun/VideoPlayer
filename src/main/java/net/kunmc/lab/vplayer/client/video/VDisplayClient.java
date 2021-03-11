@@ -7,6 +7,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ActiveRenderInfo;
 import net.minecraft.util.math.Vec3d;
 
+import javax.annotation.Nonnull;
 import java.util.UUID;
 
 public class VDisplayClient extends VDisplayAbstract {
@@ -20,6 +21,7 @@ public class VDisplayClient extends VDisplayAbstract {
         super(uuidIn);
     }
 
+    @Nonnull
     @Override
     public PlayState fetchState() {
         if (playStateQueue != null)

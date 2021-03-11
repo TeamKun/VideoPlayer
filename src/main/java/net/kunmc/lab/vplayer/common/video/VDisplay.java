@@ -2,6 +2,7 @@ package net.kunmc.lab.vplayer.common.video;
 
 import net.kunmc.lab.vplayer.common.model.PlayState;
 
+import javax.annotation.Nonnull;
 import java.util.UUID;
 
 public class VDisplay extends VDisplayAbstract {
@@ -12,6 +13,7 @@ public class VDisplay extends VDisplayAbstract {
         super(uuidIn);
     }
 
+    @Nonnull
     @Override
     public PlayState fetchState() {
         return playStateStore.fetch();

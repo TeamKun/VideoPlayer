@@ -41,10 +41,10 @@ public class VRendererClient {
         stack.push();
         stack.translate(-view.x, -view.y, -view.z);
         Matrix4f matrix = stack.getLast().getMatrix();
-        bufferbuilder.pos(matrix, (float) quad.vertices[0].x, (float) quad.vertices[0].y, (float) quad.vertices[0].z).tex(0, 1).endVertex();
-        bufferbuilder.pos(matrix, (float) quad.vertices[1].x, (float) quad.vertices[1].y, (float) quad.vertices[1].z).tex(1, 1).endVertex();
-        bufferbuilder.pos(matrix, (float) quad.vertices[2].x, (float) quad.vertices[2].y, (float) quad.vertices[2].z).tex(1, 0).endVertex();
-        bufferbuilder.pos(matrix, (float) quad.vertices[3].x, (float) quad.vertices[3].y, (float) quad.vertices[3].z).tex(0, 0).endVertex();
+        bufferbuilder.pos(matrix, (float) quad.vertices[0].x, (float) quad.vertices[0].y, (float) quad.vertices[0].z).tex(0, 1).endVertex();    // left top
+        bufferbuilder.pos(matrix, (float) quad.vertices[1].x, (float) quad.vertices[1].y, (float) quad.vertices[1].z).tex(0, 0).endVertex();    // left bottom
+        bufferbuilder.pos(matrix, (float) quad.vertices[2].x, (float) quad.vertices[2].y, (float) quad.vertices[2].z).tex(1, 0).endVertex();    // right bottom
+        bufferbuilder.pos(matrix, (float) quad.vertices[3].x, (float) quad.vertices[3].y, (float) quad.vertices[3].z).tex(1, 1).endVertex();    // right top
         bufferbuilder.finishDrawing();
         WorldVertexBufferUploader.draw(bufferbuilder);
         stack.pop();
@@ -123,10 +123,10 @@ public class VRendererClient {
                 float f = (System.currentTimeMillis() % 3000) / 3000f;
                 float s = .1f;
 
-                bufferbuilder.pos(-.8, .8, 0).tex(nw0 * s - f, nh0).endVertex();
-                bufferbuilder.pos(-.8, -.8, 0).tex(nw0 * s - f, nh1).endVertex();
-                bufferbuilder.pos(.8, -.8, 0).tex(nw1 * s - f, nh1).endVertex();
-                bufferbuilder.pos(.8, .8, 0).tex(nw1 * s - f, nh0).endVertex();
+                bufferbuilder.pos(-.8, .8, 0).tex(nw0 * s - f, nh0).endVertex();    // left top
+                bufferbuilder.pos(-.8, -.8, 0).tex(nw0 * s - f, nh1).endVertex();   // left bottom
+                bufferbuilder.pos(.8, -.8, 0).tex(nw1 * s - f, nh1).endVertex();    // right bottom
+                bufferbuilder.pos(.8, .8, 0).tex(nw1 * s - f, nh0).endVertex();     // right top
 
                 bufferbuilder.finishDrawing();
                 WorldVertexBufferUploader.draw(bufferbuilder);
@@ -139,10 +139,10 @@ public class VRendererClient {
                 manager.bindTexture(loadingTexture);
                 bufferbuilder.begin(GL_QUADS, DefaultVertexFormats.POSITION_TEX);
 
-                bufferbuilder.pos(-1, 1, 0).tex(nw0, nh0).endVertex();
-                bufferbuilder.pos(-1, -1, 0).tex(nw0, nh1).endVertex();
-                bufferbuilder.pos(1, -1, 0).tex(nw1, nh1).endVertex();
-                bufferbuilder.pos(1, 1, 0).tex(nw1, nh0).endVertex();
+                bufferbuilder.pos(-1, 1, 0).tex(nw0, nh0).endVertex();  // left top
+                bufferbuilder.pos(-1, -1, 0).tex(nw0, nh1).endVertex(); // left bottom
+                bufferbuilder.pos(1, -1, 0).tex(nw1, nh1).endVertex();  // right bottom
+                bufferbuilder.pos(1, 1, 0).tex(nw1, nh0).endVertex();   // right top
 
                 bufferbuilder.finishDrawing();
                 WorldVertexBufferUploader.draw(bufferbuilder);

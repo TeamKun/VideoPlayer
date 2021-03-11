@@ -17,6 +17,7 @@ import net.minecraft.world.storage.WorldSavedData;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.util.Constants;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -96,6 +97,7 @@ public class VDisplayManagerServer extends WorldSavedData implements DisplayMana
     }
 
     // Operation
+    @Nonnull
     @Override
     public VDisplay create(String name) {
         UUID uuid = UUID.randomUUID();

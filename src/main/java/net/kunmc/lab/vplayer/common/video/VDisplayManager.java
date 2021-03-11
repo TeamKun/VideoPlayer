@@ -2,12 +2,14 @@ package net.kunmc.lab.vplayer.common.video;
 
 import net.kunmc.lab.vplayer.common.model.DisplayManagaer;
 
+import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class VDisplayManager implements DisplayManagaer<UUID, VDisplay> {
     private final Map<UUID, VDisplay> displayMap = new ConcurrentHashMap<>();
 
+    @Nonnull
     @Override
     public VDisplay create(UUID uuid) {
         VDisplay display = new VDisplay(uuid);
