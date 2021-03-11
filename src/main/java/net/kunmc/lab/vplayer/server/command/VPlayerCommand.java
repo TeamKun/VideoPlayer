@@ -1,5 +1,6 @@
 package net.kunmc.lab.vplayer.server.command;
 
+import com.google.common.base.Strings;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.BoolArgumentType;
@@ -179,8 +180,9 @@ public class VPlayerCommand {
                                                 throw new CommandException(new StringTextComponent("ディスプレイが見つかりません。"));
 
                                             ctx.getSource().sendFeedback(
-                                                    new StringTextComponent("[かめすたMod] ").applyTextStyle(TextFormatting.LIGHT_PURPLE)
-                                                            .appendSibling(new StringTextComponent(display.fetchState().file)),
+                                                    new StringTextComponent("").applyTextStyle(TextFormatting.GREEN)
+                                                            .appendSibling(new StringTextComponent("[かめすたMod] ").applyTextStyle(TextFormatting.LIGHT_PURPLE))
+                                                            .appendSibling(new StringTextComponent(Strings.nullToEmpty(display.fetchState().file))),
                                                     true);
 
                                             return Command.SINGLE_SUCCESS;

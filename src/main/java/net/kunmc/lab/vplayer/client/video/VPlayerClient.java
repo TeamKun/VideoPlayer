@@ -1,5 +1,6 @@
 package net.kunmc.lab.vplayer.client.video;
 
+import com.google.common.base.Strings;
 import com.google.common.base.Suppliers;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import net.kunmc.lab.vplayer.client.mpv.MPlayerInstance;
@@ -10,6 +11,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 
 public class VPlayerClient implements VEventHandlerClient {
+    private static final int LOADING_WIDTH = 1920;
+    private static final int LOADING_HEIGHT = 1080;
+
     private final MPlayerInstance playerClient;
     private final VRendererClient renderer;
     private boolean started;
@@ -24,7 +28,14 @@ public class VPlayerClient implements VEventHandlerClient {
 
         @Override
         public CompletableFuture<Void> setFile(String file) {
-            return playerClient.getDispatchers().dispatcherCommand.commandAsync("loadfile", file);
+            return playerClient.getDispatchers().dispatcherCommand.commandAsync("loadfile", Strings.nullToEmpty(file))
+                    .thenRun(() -> {
+                        if (file == null) {
+                            playerClient.updateFbo(LOADING_WIDTH, LOADING_HEIGHT);
+                            renderer.updateFbo(LOADING_WIDTH, LOADING_HEIGHT);
+                            getTime().thenRun(() -> started = false);
+                        }
+                    });
         }
 
         @Override
@@ -70,10 +81,10 @@ public class VPlayerClient implements VEventHandlerClient {
 
     public void init() {
         playerClient.init();
-        renderer.initFbo(1920, 1080);
+        renderer.initFbo(LOADING_WIDTH, LOADING_HEIGHT);
         renderer.initFrame();
         playerClient.initFbo(renderer.getFramebuffer().framebufferObject);
-        playerClient.updateFbo(1920, 1080);
+        playerClient.updateFbo(LOADING_WIDTH, LOADING_HEIGHT);
     }
 
     public VControllerClient getController() {
