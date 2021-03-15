@@ -1,17 +1,13 @@
 package net.kunmc.lab.vplayer.client.mpv;
 
-import com.sun.jna.Native;
-import com.sun.jna.Pointer;
-import com.sun.jna.Structure;
-import com.sun.jna.Union;
+import com.sun.jna.*;
 import com.sun.jna.ptr.PointerByReference;
-import com.sun.jna.win32.StdCallLibrary;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-public interface MpvLibrary extends StdCallLibrary {
+public interface MpvLibrary extends Library {
     MpvLibrary INSTANCE = (MpvLibrary) Native.loadLibrary("mpv", MpvLibrary.class);
 
     /*
@@ -267,15 +263,15 @@ public interface MpvLibrary extends StdCallLibrary {
         }
     }
 
-    interface get_proc_address extends StdCallCallback {
+    interface get_proc_address extends Callback {
         Pointer callback(Pointer handle, String name);
     }
 
-    interface on_wakeup extends StdCallCallback {
+    interface on_wakeup extends Callback {
         void callback(Pointer d);
     }
 
-    interface on_render_update extends StdCallCallback {
+    interface on_render_update extends Callback {
         void callback(Pointer d);
     }
 }
