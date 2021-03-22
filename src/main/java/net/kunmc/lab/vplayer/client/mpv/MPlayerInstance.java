@@ -30,17 +30,19 @@ public class MPlayerInstance {
     }
 
     public void init() {
-        handle = mpv.mpv_create();
-        if (handle == 0)
-            throw new RuntimeException("failed creating context");
+        if (MPlayer.mpv != null) {
+            handle = mpv.mpv_create();
+            if (handle == 0)
+                throw new RuntimeException("failed creating context");
 
-        // mpv.mpv_set_option_string(handle, "terminal", "yes");
-        // mpv.mpv_set_option_string(handle, "msg-level", "all=v");
-        mpv.mpv_set_option_string(handle, "keep-open", "yes");
+            // mpv.mpv_set_option_string(handle, "terminal", "yes");
+            // mpv.mpv_set_option_string(handle, "msg-level", "all=v");
+            mpv.mpv_set_option_string(handle, "keep-open", "yes");
 
-        validateStatus(mpv, mpv.mpv_initialize(handle));
+            validateStatus(mpv, mpv.mpv_initialize(handle));
 
-        initMpvRenderer(mpv, handle);
+            initMpvRenderer(mpv, handle);
+        }
 
         dispatchers = new MPlayerEventDispatchers(handle);
     }
@@ -50,6 +52,9 @@ public class MPlayerInstance {
     }
 
     public void renderFrame(VEventHandlerClient handler) {
+        if (MPlayer.mpv == null)
+            return;
+
         renderMpv(handler);
 
         mpv.mpv_render_context_report_swap(mpv_gl.getValue());
@@ -60,6 +65,9 @@ public class MPlayerInstance {
     }
 
     public void destroy() {
+        if (MPlayer.mpv == null)
+            return;
+
         mpv.mpv_render_context_free(mpv_gl.getValue());
         mpv_gl.setValue(null);
         mpv.mpv_terminate_destroy(handle);
@@ -78,12 +86,18 @@ public class MPlayerInstance {
     }
 
     public void renderImmediately() {
+        if (MPlayer.mpv == null)
+            return;
+
         // glDebugMessageInsert(GL_DEBUG_SOURCE_APPLICATION, GL_DEBUG_TYPE_MARKER, 114514, GL_DEBUG_SEVERITY_HIGH, "MPV Render Start");
         mpv.mpv_render_context_render(mpv_gl.getValue(), head_render_param);
         // glDebugMessageInsert(GL_DEBUG_SOURCE_APPLICATION, GL_DEBUG_TYPE_MARKER, 1919810, GL_DEBUG_SEVERITY_HIGH, "MPV Render End");
     }
 
     public void processEvent(VEventHandlerClient handler) {
+        if (MPlayer.mpv == null)
+            return;
+
         if (volumeChanged) {
             volumeChanged = false;
             dispatchers.dispatcherPropertySet.setPropertyAsyncDouble("volume", volume).thenRun(() -> volumeChanged = true);
@@ -135,11 +149,17 @@ public class MPlayerInstance {
     }
 
     public void initFbo(int fbo) {
+        if (MPlayer.mpv == null)
+            return;
+
         fbo_settings.fbo = fbo;
         fbo_settings.write();
     }
 
     public void updateFbo(int _width, int _height) {
+        if (MPlayer.mpv == null)
+            return;
+
         fbo_settings.w = _width;
         fbo_settings.h = _height;
         fbo_settings.write();

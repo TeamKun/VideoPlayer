@@ -26,6 +26,9 @@ public class MPlayerEventDispatchers {
 
     public class MGetPropertyEventDispatcher extends EventDispatcher.CompletableEventDispatcher<Pointer> {
         private CompletableFuture<Pointer> getPropertyAsync(String name, int format) {
+            if (handle == 0)
+                return CompletableFuture.completedFuture(null);
+
             long id = generateId();
             MPlayer.mpv.mpv_get_property_async(handle, id, name, format);
             return onRequest(id);
@@ -46,6 +49,9 @@ public class MPlayerEventDispatchers {
 
     public class MSetPropertyEventDispatcher extends EventDispatcher.CompletableEventDispatcher<Void> {
         private CompletableFuture<Void> setPropertyAsync(String name, int format, Pointer data) {
+            if (handle == 0)
+                return CompletableFuture.completedFuture(null);
+
             long id = generateId();
             MPlayer.mpv.mpv_set_property_async(handle, id, name, format, data);
             return onRequest(id);
@@ -73,6 +79,9 @@ public class MPlayerEventDispatchers {
 
     public class MCommandEventDispatcher extends EventDispatcher.CompletableEventDispatcher<Void> {
         private CompletableFuture<Void> commandAsyncRaw(String[] args) {
+            if (handle == 0)
+                return CompletableFuture.completedFuture(null);
+
             long id = generateId();
             MPlayer.mpv.mpv_command_async(handle, id, args);
             return onRequest(id);
@@ -85,6 +94,9 @@ public class MPlayerEventDispatchers {
 
     public class MObservePropertyEventDispatcher extends EventDispatcher.RepeatableEventDispatcher<Pointer> {
         private RepeatObservable<Pointer> observeAsync(String name, int format) {
+            if (handle == 0)
+                return new RepeatObservable<>();
+
             long id = generateId();
             MPlayer.mpv.mpv_observe_property(handle, id, name, format);
             return onRequest(id);

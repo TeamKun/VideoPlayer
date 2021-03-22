@@ -3,8 +3,13 @@ package net.kunmc.lab.vplayer.client.mpv;
 import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
 import cz.adamh.utils.NativeUtils;
+import net.kunmc.lab.vplayer.VideoPlayer;
+import net.minecraft.util.Util;
+import net.minecraftforge.fml.loading.FMLPaths;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Optional;
 
 import static org.lwjgl.glfw.GLFW.glfwGetProcAddress;
@@ -31,12 +36,25 @@ public class MPlayer {
     };
 
     public static void init() {
-        try {
-            NativeUtils.loadLibraryFromJar("/natives/" + System.mapLibraryName("mpv"));
-        } catch (IOException e) {
-            throw new RuntimeException("JNA Error", e);
+        switch (Util.getOSType()) {
+            case WINDOWS:
+                try {
+                    NativeUtils.loadLibraryFromJar("/natives/" + System.mapLibraryName("mpv"));
+
+                    mpv = MpvLibrary.INSTANCE;
+                } catch (IOException e) {
+                    VideoPlayer.LOGGER.warn("JNA Error", e);
+                }
+                break;
         }
 
-        mpv = MpvLibrary.INSTANCE;
+        Path ytdlPath = FMLPaths.GAMEDIR.get().resolve("youtube-dl.exe");
+        if (!Files.exists(ytdlPath)) {
+            try {
+                Files.copy(MPlayer.class.getResourceAsStream("/natives/youtube-dl.exe"), ytdlPath);
+            } catch (IOException e) {
+                VideoPlayer.LOGGER.warn("YouTube-DL Error", e);
+            }
+        }
     }
 }
