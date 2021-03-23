@@ -2,7 +2,7 @@ package net.kunmc.lab.vplayer.common.data;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import net.minecraft.world.dimension.DimensionType;
+import net.minecraft.world.DimensionType;
 
 import javax.annotation.Nullable;
 
