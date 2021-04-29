@@ -36,7 +36,7 @@ public class MPlayer {
     };
 
     public static void init() {
-        switch (Util.getOSType()) {
+        switch (Util.getPlatform()) {
             case WINDOWS:
                 try {
                     NativeUtils.loadLibraryFromJar("/natives/" + System.mapLibraryName("mpv"));

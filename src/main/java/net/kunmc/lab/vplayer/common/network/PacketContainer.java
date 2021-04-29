@@ -27,11 +27,11 @@ public class PacketContainer {
     }
 
     public static void encode(PacketContainer message, PacketBuffer buffer) {
-        buffer.writeString(DataSerializer.encode(message));
+        buffer.writeUtf(DataSerializer.encode(message));
     }
 
     public static PacketContainer decode(PacketBuffer buffer) {
-        PacketContainer data = DataSerializer.decode(buffer.readString(), PacketContainer.class);
+        PacketContainer data = DataSerializer.decode(buffer.readUtf(), PacketContainer.class);
         if (data == null)
             VideoPlayer.LOGGER.warn("Invalid Packet");
         return data;

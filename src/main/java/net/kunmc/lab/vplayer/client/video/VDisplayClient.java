@@ -5,9 +5,12 @@ import net.kunmc.lab.vplayer.common.model.PlayState;
 import net.kunmc.lab.vplayer.common.video.VDisplayAbstract;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ActiveRenderInfo;
+import net.minecraft.util.RegistryKey;
 import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.world.World;
 
 import javax.annotation.Nonnull;
+import java.util.Objects;
 import java.util.UUID;
 
 public class VDisplayClient extends VDisplayAbstract {
@@ -57,7 +60,8 @@ public class VDisplayClient extends VDisplayAbstract {
         ActiveRenderInfo activeRenderInfo = Minecraft.getInstance().gameRenderer.getMainCamera();
         Vector3d view = activeRenderInfo.getPosition();
         double distance = quad.getNearestDistance(view);
-        return distance < 96 && activeRenderInfo.getEntity().getCommandSenderWorld().dimension().equals(quad.dimension);
+        RegistryKey<World> dimension = activeRenderInfo.getEntity().getCommandSenderWorld().dimension();
+        return distance < 96 && Objects.equals(dimension.location(), quad.dimension.location());
     }
 
     public void validate() {

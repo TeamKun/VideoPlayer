@@ -16,6 +16,7 @@ import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
 import java.util.List;
 import java.util.Optional;
@@ -28,12 +29,14 @@ public class ProxyClient extends ProxyServer {
     public void registerEvents() {
         super.registerEvents();
 
+        // Register
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::doClientStuff);
+
         // Packet
         PacketDispatcherClient.register();
     }
 
-    @SubscribeEvent
-    public void doClientStuff(final FMLClientSetupEvent ev) {
+    private void doClientStuff(final FMLClientSetupEvent ev) {
         MPlayer.init();
     }
 

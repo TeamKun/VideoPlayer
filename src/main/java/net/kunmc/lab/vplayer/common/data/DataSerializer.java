@@ -2,13 +2,16 @@ package net.kunmc.lab.vplayer.common.data;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import net.minecraft.world.DimensionType;
+import com.google.gson.reflect.TypeToken;
+import net.minecraft.util.RegistryKey;
+import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
 
 public class DataSerializer {
     private static final Gson gson = new GsonBuilder()
-            .registerTypeAdapter(DimensionType.class, new DimensionTypeAdaptor())
+            .registerTypeAdapter(new TypeToken<RegistryKey<World>>() {
+            }.getType(), new DimensionTypeAdaptor())
             .create();
 
     public static String encode(Object object) {

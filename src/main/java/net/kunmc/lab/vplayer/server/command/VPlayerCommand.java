@@ -17,16 +17,14 @@ import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.command.arguments.ILocationArgument;
 import net.minecraft.command.arguments.Vec3Argument;
+import net.minecraft.util.RegistryKey;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TextComponentUtils;
-import net.minecraft.util.text.TextFormatting;
+import net.minecraft.util.math.vector.Vector3d;
+import net.minecraft.util.text.*;
 import net.minecraft.util.text.event.ClickEvent;
 import net.minecraft.util.text.event.HoverEvent;
-import net.minecraft.world.dimension.DimensionType;
+import net.minecraft.world.World;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -40,31 +38,33 @@ public class VPlayerCommand {
                                 .executes(ctx -> {
                                     VDisplayManagerServer state = ProxyServer.getDisplayManager();
 
-                                    ITextComponent component = TextComponentUtils.makeList(
+                                    ITextComponent component = TextComponentUtils.formatList(
                                             state.listNames(),
                                             msg -> {
                                                 StringTextComponent text = new StringTextComponent(msg);
                                                 Optional.ofNullable(state.get(msg))
                                                         .map(Display::getQuad)
-                                                        .ifPresent(e -> text.applyTextStyle(s -> {
-                                                            Vec3d vec = e.vertices[0];
-                                                            s.setHoverEvent(new HoverEvent(
+                                                        .ifPresent(e -> {
+                                                            Style s = text.getStyle();
+                                                            Vector3d vec = e.vertices[0];
+                                                            s.withHoverEvent(new HoverEvent(
                                                                     HoverEvent.Action.SHOW_TEXT,
                                                                     new StringTextComponent(String.format("クリックでTP: %s(x:%.1f, y:%.1f, z:%.1f)", msg, vec.x, vec.y, vec.z))
                                                             ));
-                                                            s.setClickEvent(new ClickEvent(
+                                                            s.withClickEvent(new ClickEvent(
                                                                     ClickEvent.Action.RUN_COMMAND,
                                                                     String.format("/tp %f %f %f", vec.x, vec.y, vec.z)
                                                             ));
-                                                        }));
+                                                            text.setStyle(s);
+                                                        });
                                                 return text;
                                             }
                                     );
 
-                                    ctx.getSource().sendFeedback(
-                                            new StringTextComponent("").applyTextStyle(TextFormatting.GREEN)
-                                                    .appendSibling(new StringTextComponent("[かめすたMod] ").applyTextStyle(TextFormatting.LIGHT_PURPLE))
-                                                    .appendSibling(component),
+                                    ctx.getSource().sendSuccess(
+                                            new StringTextComponent("").withStyle(TextFormatting.GREEN)
+                                                    .append(new StringTextComponent("[かめすたMod] ").withStyle(TextFormatting.LIGHT_PURPLE))
+                                                    .append(component),
                                             true);
 
                                     return Command.SINGLE_SUCCESS;
@@ -78,7 +78,7 @@ public class VPlayerCommand {
                                             VDisplayManagerServer state = ProxyServer.getDisplayManager();
                                             VDisplay display = state.create(name);
 
-                                            state.setQuad(name, getQuad(ctx, display.getQuad(), ctx.getSource().getPos(), null, true, .1));
+                                            state.setQuad(name, getQuad(ctx, display.getQuad(), ctx.getSource().getPosition(), null, true, .1));
 
                                             return Command.SINGLE_SUCCESS;
                                         })
@@ -109,14 +109,14 @@ public class VPlayerCommand {
                                                     if (display == null)
                                                         throw new CommandException(new StringTextComponent("ディスプレイが見つかりません。"));
 
-                                                    state.setQuad(name, getQuad(ctx, display.getQuad(), ctx.getSource().getPos(), null, true, .1));
+                                                    state.setQuad(name, getQuad(ctx, display.getQuad(), ctx.getSource().getPosition(), null, true, .1));
 
                                                     return Command.SINGLE_SUCCESS;
                                                 })
                                                 .then(Commands.argument("pos", Vec3Argument.vec3())
                                                         .executes(ctx -> {
                                                             String name = StringArgumentType.getString(ctx, "name");
-                                                            ILocationArgument pos = Vec3Argument.getLocation(ctx, "pos");
+                                                            ILocationArgument pos = Vec3Argument.getCoordinates(ctx, "pos");
 
                                                             VDisplayManagerServer state = ProxyServer.getDisplayManager();
 
@@ -140,14 +140,14 @@ public class VPlayerCommand {
                                                     if (display == null)
                                                         throw new CommandException(new StringTextComponent("ディスプレイが見つかりません。"));
 
-                                                    state.setQuad(name, getQuad(ctx, display.getQuad(), null, ctx.getSource().getPos(), true, .1));
+                                                    state.setQuad(name, getQuad(ctx, display.getQuad(), null, ctx.getSource().getPosition(), true, .1));
 
                                                     return Command.SINGLE_SUCCESS;
                                                 })
                                                 .then(Commands.argument("pos", Vec3Argument.vec3())
                                                         .executes(ctx -> {
                                                             String name = StringArgumentType.getString(ctx, "name");
-                                                            ILocationArgument pos = Vec3Argument.getLocation(ctx, "pos");
+                                                            ILocationArgument pos = Vec3Argument.getCoordinates(ctx, "pos");
 
                                                             VDisplayManagerServer state = ProxyServer.getDisplayManager();
 
@@ -178,10 +178,10 @@ public class VPlayerCommand {
                                             if (display == null)
                                                 throw new CommandException(new StringTextComponent("ディスプレイが見つかりません。"));
 
-                                            ctx.getSource().sendFeedback(
-                                                    new StringTextComponent("").applyTextStyle(TextFormatting.GREEN)
-                                                            .appendSibling(new StringTextComponent("[かめすたMod] ").applyTextStyle(TextFormatting.LIGHT_PURPLE))
-                                                            .appendSibling(new StringTextComponent(Strings.nullToEmpty(display.fetchState().file))),
+                                            ctx.getSource().sendSuccess(
+                                                    new StringTextComponent("").withStyle(TextFormatting.GREEN)
+                                                            .append(new StringTextComponent("[かめすたMod] ").withStyle(TextFormatting.LIGHT_PURPLE))
+                                                            .append(new StringTextComponent(Strings.nullToEmpty(display.fetchState().file))),
                                                     true);
 
                                             return Command.SINGLE_SUCCESS;
@@ -314,17 +314,17 @@ public class VPlayerCommand {
     }
 
     @Nonnull
-    public static Quad getQuad(CommandContext<CommandSource> context, @Nullable Quad prev, @Nullable Vec3d pos1, @Nullable Vec3d pos2, boolean align, double padding) {
-        DimensionType dimension = Optional.ofNullable(prev)
+    public static Quad getQuad(CommandContext<CommandSource> context, @Nullable Quad prev, @Nullable Vector3d pos1, @Nullable Vector3d pos2, boolean align, double padding) {
+        RegistryKey<World> dimension = Optional.ofNullable(prev)
                 .map(e -> e.dimension)
                 .orElseGet(() ->
                         Optional.ofNullable(context.getSource().getEntity())
-                                .map(e -> e.dimension)
-                                .orElse(DimensionType.OVERWORLD)
+                                .map(e -> e.getCommandSenderWorld().dimension())
+                                .orElse(World.OVERWORLD)
                 );
 
         if (pos1 == null && pos2 == null)
-            pos1 = context.getSource().getPos();
+            pos1 = context.getSource().getPosition();
 
         if (prev != null) {
             if (pos1 == null)
@@ -361,16 +361,16 @@ public class VPlayerCommand {
                     p1z = p2z = b1.getZ() + (1 - offset);
             }
 
-            pos1 = new Vec3d(p1x, p1y, p1z);
-            pos2 = new Vec3d(p2x, p2y, p2z);
+            pos1 = new Vector3d(p1x, p1y, p1z);
+            pos2 = new Vector3d(p2x, p2y, p2z);
         }
 
         return new Quad(
                 dimension,
-                new Vec3d(pos1.x, pos1.y, pos1.z),  // left top
-                new Vec3d(pos1.x, pos2.y, pos1.z),  // left bottom
-                new Vec3d(pos2.x, pos2.y, pos2.z),  // right bottom
-                new Vec3d(pos2.x, pos1.y, pos2.z)   // right top
+                new Vector3d(pos1.x, pos1.y, pos1.z),  // left top
+                new Vector3d(pos1.x, pos2.y, pos1.z),  // left bottom
+                new Vector3d(pos2.x, pos2.y, pos2.z),  // right bottom
+                new Vector3d(pos2.x, pos1.y, pos2.z)   // right top
         );
     }
 

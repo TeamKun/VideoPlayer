@@ -83,7 +83,7 @@ public class VPlayerClient implements VEventHandlerClient {
         playerClient.init();
         renderer.initFbo(LOADING_WIDTH, LOADING_HEIGHT);
         renderer.initFrame();
-        playerClient.initFbo(renderer.getFramebuffer().framebufferObject);
+        playerClient.initFbo(renderer.getFramebuffer().frameBufferId);
         playerClient.updateFbo(LOADING_WIDTH, LOADING_HEIGHT);
     }
 

@@ -47,7 +47,7 @@ public class VDisplayManagerServer extends WorldSavedData implements DisplayMana
     }
 
     @Override
-    public void read(CompoundNBT nbt) {
+    public void load(CompoundNBT nbt) {
         clear();
 
         ListNBT list = nbt.getList("displays", Constants.NBT.TAG_COMPOUND);
@@ -70,7 +70,7 @@ public class VDisplayManagerServer extends WorldSavedData implements DisplayMana
     }
 
     @Override
-    public CompoundNBT write(CompoundNBT nbt) {
+    public CompoundNBT save(CompoundNBT nbt) {
         ListNBT list = nbt.getList("displays", Constants.NBT.TAG_COMPOUND);
         displayNames.forEach((name, id) -> {
             Optional.ofNullable(manager.get(id)).ifPresent(d -> {
@@ -165,7 +165,7 @@ public class VDisplayManagerServer extends WorldSavedData implements DisplayMana
     // WorldSavedData methods
     public static VDisplayManagerServer get(ServerWorld world) {
         // The IS_GLOBAL constant is there for clarity, and should be simplified into the right branch.
-        DimensionSavedDataManager storage = world.getSavedData();
-        return storage.getOrCreate(() -> new VDisplayManagerServer(DATA_NAME), DATA_NAME);
+        DimensionSavedDataManager storage = world.getDataStorage();
+        return storage.computeIfAbsent(() -> new VDisplayManagerServer(DATA_NAME), DATA_NAME);
     }
 }

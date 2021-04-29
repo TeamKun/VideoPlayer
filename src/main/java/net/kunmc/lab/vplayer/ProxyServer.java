@@ -15,13 +15,12 @@ import net.kunmc.lab.vplayer.server.video.VDisplayManagerServer;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.dimension.DimensionType;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
 import java.util.Map;
 import java.util.Objects;
@@ -39,13 +38,10 @@ public class ProxyServer {
     }
 
     public static VDisplayManagerServer getDisplayManager() {
-        return VDisplayManagerServer.get(server.getWorld(DimensionType.OVERWORLD));
+        return VDisplayManagerServer.get(server.overworld());
     }
 
     public void registerEvents() {
-        // Register the doClientStuff method for modloading
-        FMLJavaModLoadingContext.get().getModEventBus().register(this);
-
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
 
@@ -56,8 +52,11 @@ public class ProxyServer {
     @SubscribeEvent
     public void onServerStart(FMLServerStartingEvent event) {
         server = event.getServer();
+    }
 
-        VPlayerCommand.register(event.getCommandDispatcher());
+    @SubscribeEvent
+    public void onRegisterCommand(RegisterCommandsEvent event) {
+        VPlayerCommand.register(event.getDispatcher());
     }
 
     @SubscribeEvent
@@ -73,7 +72,7 @@ public class ProxyServer {
         VDisplayManagerServer state = getDisplayManager();
         PacketContainer packet = new PacketContainer(VideoPatchOperation.SYNC, state.list().stream()
                 .map(p -> new VideoPatch(p.getUUID(), p.getQuad(), p.fetchState())).collect(Collectors.toList()));
-        PacketDispatcherServer.send(((ServerPlayerEntity) player).connection.getNetworkManager(), packet);
+        PacketDispatcherServer.send(((ServerPlayerEntity) player).connection.getConnection(), packet);
     }
 
     @SubscribeEvent
@@ -85,7 +84,7 @@ public class ProxyServer {
         getServer().getPlayerList().getPlayers().stream()
                 .map(p -> p.connection)
                 .filter(Objects::nonNull)
-                .forEach(p -> PacketDispatcherServer.send(p.getNetworkManager(), packet));
+                .forEach(p -> PacketDispatcherServer.send(p.getConnection(), packet));
     }
 
     private final Table<UUID, UUID, Double> durationTable = HashBasedTable.create();
