@@ -16,7 +16,7 @@ plugins {
 apply plugin: 'net.minecraftforge.gradle'
 
 group = 'net.kunmc.lab'
-version = '1.1-1.16.5-SNAPSHOT'
+version = '1.2-1.16.5-SNAPSHOT'
 archivesBaseName = 'vplayer'
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(8) // Mojang ships Java 8 to end users, so your mod should target Java 8.

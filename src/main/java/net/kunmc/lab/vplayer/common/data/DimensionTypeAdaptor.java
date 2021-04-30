@@ -13,6 +13,10 @@ import java.io.IOException;
 public class DimensionTypeAdaptor extends TypeAdapter<RegistryKey<World>> {
     @Override
     public void write(JsonWriter out, RegistryKey<World> value) throws IOException {
+        if (!Registry.DIMENSION_REGISTRY.location().equals(value.getRegistryName())) {
+            out.nullValue();
+            return;
+        }
         out.beginObject();
         if (World.OVERWORLD.equals(value)) {
             out.name("id").value(0);
@@ -21,7 +25,7 @@ public class DimensionTypeAdaptor extends TypeAdapter<RegistryKey<World>> {
         } else if (World.END.equals(value)) {
             out.name("id").value(1);
         }
-        out.name("name").value(value.getRegistryName().toString());
+        out.name("name").value(value.location().toString());
         out.endObject();
     }
 

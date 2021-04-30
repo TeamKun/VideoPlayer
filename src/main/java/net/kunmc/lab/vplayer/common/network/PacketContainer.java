@@ -6,6 +6,7 @@ import net.kunmc.lab.vplayer.common.patch.VideoPatch;
 import net.kunmc.lab.vplayer.common.patch.VideoPatchOperation;
 import net.minecraft.network.PacketBuffer;
 
+import javax.annotation.Nonnull;
 import java.util.List;
 
 public class PacketContainer {
@@ -26,7 +27,7 @@ public class PacketContainer {
         return patches;
     }
 
-    public static void encode(PacketContainer message, PacketBuffer buffer) {
+    public static void encode(PacketContainer message, @Nonnull PacketBuffer buffer) {
         buffer.writeUtf(DataSerializer.encode(message));
     }
 
