@@ -4,10 +4,13 @@ import com.sun.jna.Pointer;
 import com.sun.jna.ptr.IntByReference;
 import cz.adamh.utils.NativeUtils;
 import net.kunmc.lab.vplayer.VideoPlayer;
+import net.kunmc.lab.vplayer.common.util.HashUtils;
 import net.minecraft.util.Util;
 import net.minecraftforge.fml.loading.FMLPaths;
 
+import javax.swing.*;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -49,9 +52,22 @@ public class MPlayer {
         }
 
         Path ytdlPath = FMLPaths.GAMEDIR.get().resolve("youtube-dl.exe");
+        if (Files.exists(ytdlPath)) {
+            String hash = HashUtils.fileToMD5(ytdlPath);
+            if (!"7f492c4db1af1ee43adfce37071ef317".equalsIgnoreCase(hash)) {
+                try {
+                    Files.delete(ytdlPath);
+                } catch (IOException e) {
+                    JOptionPane.showMessageDialog(null, "youtube-dl.exeのアップデートに失敗しました。一旦すべてのMinecraftを終了してから起動し直してください。");
+                    throw new RuntimeException("youtube-dl.exeのアップデートに失敗しました。一旦すべてのMinecraftを終了してから起動し直してください。");
+                }
+            }
+        }
         if (!Files.exists(ytdlPath)) {
             try {
-                Files.copy(MPlayer.class.getResourceAsStream("/natives/youtube-dl.exe"), ytdlPath);
+                InputStream stream = MPlayer.class.getResourceAsStream("/natives/yt-dlp.exe");
+                if (stream != null)
+                    Files.copy(stream, ytdlPath);
             } catch (IOException e) {
                 VideoPlayer.LOGGER.warn("YouTube-DL Error", e);
             }

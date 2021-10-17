@@ -38,6 +38,7 @@ public class MPlayerInstance {
             // mpv.mpv_set_option_string(handle, "terminal", "yes");
             // mpv.mpv_set_option_string(handle, "msg-level", "all=v");
             mpv.mpv_set_option_string(handle, "keep-open", "yes");
+            mpv.mpv_set_option_string(handle, "ytdl-format", "bestvideo[height=?480][vcodec!=?vp9]+bestaudio/best");
 
             validateStatus(mpv, mpv.mpv_initialize(handle));
 
