@@ -6,6 +6,7 @@ import cz.adamh.utils.NativeUtils;
 import net.kunmc.lab.vplayer.VideoPlayer;
 import net.kunmc.lab.vplayer.common.util.HashUtils;
 import net.minecraft.util.Util;
+import net.minecraftforge.fml.ModLoadingException;
 import net.minecraftforge.fml.loading.FMLPaths;
 
 import javax.swing.*;
@@ -21,6 +22,7 @@ public class MPlayer {
     public static MpvLibrary mpv;
     public static final IntByReference zero = new IntByReference(0);
     public static final IntByReference one = new IntByReference(1);
+    private static boolean failedToUpdate = false;
 
     public static void validateStatus(MpvLibrary mpv, int status) throws RuntimeException {
         if (status < 0)
@@ -58,8 +60,8 @@ public class MPlayer {
                 try {
                     Files.delete(ytdlPath);
                 } catch (IOException e) {
-                    JOptionPane.showMessageDialog(null, "youtube-dl.exeのアップデートに失敗しました。一旦すべてのMinecraftを終了してから起動し直してください。");
-                    throw new RuntimeException("youtube-dl.exeのアップデートに失敗しました。一旦すべてのMinecraftを終了してから起動し直してください。");
+                    failedToUpdate = true;
+                    throw new YoutubeDLInstallException("youtube-dl.exeのアップデートに失敗しました。一旦すべてのMinecraftを終了してから起動し直してください。", e);
                 }
             }
         }
