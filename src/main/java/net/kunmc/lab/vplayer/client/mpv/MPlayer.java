@@ -56,7 +56,7 @@ public class MPlayer {
         Path ytdlPath = FMLPaths.GAMEDIR.get().resolve("youtube-dl.exe");
         if (Files.exists(ytdlPath)) {
             String hash = HashUtils.fileToMD5(ytdlPath);
-            if (!"7f492c4db1af1ee43adfce37071ef317".equalsIgnoreCase(hash)) {
+            if (!"f5211d1b2476783b6f426122b6b44547".equalsIgnoreCase(hash)) {
                 try {
                     Files.delete(ytdlPath);
                 } catch (IOException e) {
